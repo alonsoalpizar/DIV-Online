@@ -1,0 +1,107 @@
+/* styles/designer.css */
+
+:root {
+  --color-azul: #228be6;
+  --color-celeste: #e3fafc;
+  --color-rojo: #fa5252;
+  --color-verde: #40c057;
+  --color-lila: #845ef7;
+  --color-base: #f8f9fa;
+  --color-borde: #ced4da;
+  --color-texto: #212529;
+  --color-hover: #dee2e6;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-base);
+}
+
+.react-flow__renderer {
+  background-color: var(--color-base);
+  transition: background 0.2s ease-in-out;
+}
+
+.node-container {
+  min-width: 160px;
+  min-height: 60px;
+  padding: 10px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto);
+  font-size: 14px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  overflow: visible;
+}
+
+
+.node-container:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.node-selected {
+  border: 2px solid var(--color-azul);
+}
+
+.nodo-proceso {
+  background-color: var(--color-celeste);
+  border-color: var(--color-azul);
+}
+
+.nodo-entrada {
+  background-color: #d0ebff;
+  border-color: var(--color-azul);
+}
+
+.nodo-condicion {
+  background-color: #ffe3e3;
+  border-color: var(--color-rojo);
+  transform: rotate(45deg);
+  width: 100px;
+  height: 100px;
+}
+
+.nodo-condicion > div {
+  transform: rotate(-45deg);
+}
+
+.nodo-salida {
+  background-color: #d3f9d8;
+  border-color: var(--color-verde);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+}
+
+.nodo-salidaError {
+  background-color: #ffc9c9;
+  border-color: var(--color-rojo);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+}
+
+.nodo-splitter {
+  background-color: #d3f9d8;
+  border-color: var(--color-verde);
+  clip-path: polygon(0% 30%, 100% 30%, 80% 100%, 20% 100%);
+}
+
+.nodo-subproceso {
+  background-color: #e5dbff;
+  border-color: var(--color-lila);
+  border-width: 2px;
+}
+
+.node-label {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.node-params {
+  font-size: 12px;
+  color: #495057;
+}

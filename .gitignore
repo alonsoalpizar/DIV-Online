@@ -1,0 +1,18 @@
+# Ignorar logs y archivos sensibles
+*.log
+*.env
+*.key
+*.pem
+
+# Ignorar ejecutables y builds
+/main
+*.out
+*.exe
+
+# Node/React frontend builds
+/node_modules/
+dist/
+build/
+
+# Carpeta de logs
+div/logs/

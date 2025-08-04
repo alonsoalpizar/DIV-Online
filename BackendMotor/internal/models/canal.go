@@ -1,0 +1,23 @@
+package models
+
+import (
+	"time"
+
+	"gorm.io/datatypes"
+)
+
+type Canal struct {
+	ID              string            `gorm:"type:uuid;primaryKey" json:"id"`
+	Codigo          string            `gorm:"unique;not null" json:"codigo"`
+	Nombre          string            `json:"nombre"`
+	TipoPublicacion string            `json:"tipoPublicacion"`
+	FechaCreacion   time.Time         `json:"fechaCreacion"`
+	Puerto          string            `json:"puerto"`
+	TipoData        string            `json:"tipoData"`
+	Extras          datatypes.JSONMap `json:"extras"`
+	Procesos        []CanalProceso    `gorm:"foreignKey:CanalID" json:"procesos,omitempty"`
+}
+
+func (Canal) TableName() string {
+	return "canales"
+}

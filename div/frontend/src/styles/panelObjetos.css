@@ -1,0 +1,26 @@
+.panel-objetos {
+  position: absolute;
+  left: 0;
+  top: 80px;
+  padding: 10px;
+  background: #f8fafc;
+  border-right: 1px solid #ccc;
+  height: calc(100% - 80px);
+  width: 180px;
+  z-index: 10;
+}
+
+.nodo-item {
+  padding: 6px;
+  margin-bottom: 8px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: grab;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.nodo-item:hover {
+  background: #e0f2fe;
+}
