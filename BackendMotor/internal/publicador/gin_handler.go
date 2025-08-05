@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,130 +20,6 @@ type LogEntrada struct {
 	Tipo      string                 `json:"tipo"`
 	Input     map[string]interface{} `json:"input"`
 	Mensaje   string                 `json:"mensaje"`
-}
-
-func GinCanalHandler(c *gin.Context) {
-	codigo := c.Param("codigo")
-	rest := c.Param("rest")
-	fmt.Printf("➡️ Ingreso a GinCanalHandler | Canal: %s | Rest: %s\n", codigo, rest)
-
-	var input map[string]interface{}
-
-	canal, ok := CanalesPublicados[codigo]
-	if !ok {
-		fmt.Printf("❌ Canal no encontrado: %s\n", codigo)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Canal no encontrado"})
-		return
-	}
-
-	fmt.Printf("✅ Canal encontrado: %s | Tipo: %s | Métodos: %d\n", canal.Codigo, canal.TipoPublicacion, len(canal.Metodos))
-
-	trigger := ""
-	switch canal.TipoPublicacion {
-	case "REST":
-		parts := strings.Split(strings.Trim(rest, "/"), "/")
-		if len(parts) > 0 {
-			trigger = parts[len(parts)-1] + "|" + c.Request.Method
-		}
-		fmt.Printf("🔧 Trigger REST construido: %s\n", trigger)
-
-	case "SOAP":
-		trigger = c.GetHeader("SOAPAction")
-		trigger = strings.Trim(trigger, `"`)
-		fmt.Printf("🔧 Trigger SOAP: %s\n", trigger)
-
-		bodyBytes, err := io.ReadAll(c.Request.Body)
-		if err != nil {
-			fmt.Println("❌ Error leyendo cuerpo SOAP")
-			c.JSON(http.StatusBadRequest, gin.H{"estado": 99, "mensaje": "Error leyendo cuerpo SOAP"})
-			return
-		}
-
-		input, err = extraerParametrosDesdeSOAP(bodyBytes)
-		if err != nil {
-			fmt.Printf("❌ Error parseando XML SOAP: %v\n", err)
-			c.JSON(http.StatusBadRequest, gin.H{"estado": 99, "mensaje": "Error parseando XML SOAP"})
-			return
-		}
-
-		fmt.Printf("📦 Input desde SOAP: %#v\n", input)
-
-	case "SIMPLE":
-		var body map[string]interface{}
-		if err := c.ShouldBindJSON(&body); err == nil {
-			if t, ok := body["trigger"].(string); ok {
-				trigger = t
-			}
-		}
-		fmt.Printf("🔧 Trigger SIMPLE recibido: %s\n", trigger)
-	}
-
-	metodo, existe := canal.Metodos[trigger]
-	logData := LogEntrada{
-		Timestamp: time.Now().Format(time.RFC3339),
-		Canal:     canal.Codigo,
-		Trigger:   trigger,
-		Tipo:      canal.TipoPublicacion,
-		Input:     input,
-		Mensaje:   "",
-	}
-
-	if !existe {
-		fmt.Printf("❌ Trigger no encontrado en el canal: %s\n", trigger)
-		logData.Mensaje = "Trigger no encontrado en este canal"
-		logJSON(logData)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Trigger no encontrado"})
-		return
-	}
-
-	fmt.Printf("✅ Trigger válido, ejecutando proceso: %s\n", metodo.ProcesoID)
-
-	if c.Request.Method == "GET" {
-		for k, v := range c.Request.URL.Query() {
-			if len(v) > 0 {
-				input[k] = v[0]
-			}
-		}
-	} else if c.ContentType() == "application/json" {
-		_ = c.BindJSON(&input)
-	}
-
-	logData.Input = input
-	resultado, err := ejecucion.EjecutarCanal(metodo.ProcesoID, input, canal.Codigo, trigger)
-	if err != nil {
-		fmt.Printf("❌ Error en ejecución: %v\n", err)
-		logData.Mensaje = err.Error()
-		logJSON(logData)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	fmt.Printf("✅ Resultado ejecución: %s | Data: %#v\n", resultado.Mensaje, resultado.Datos)
-	logData.Mensaje = resultado.Mensaje
-	logJSON(logData)
-
-	if canal.TipoPublicacion == "SOAP" {
-		switch strings.ToLower(canal.TipoData) {
-		case "xml":
-			xmlPayload := construirXMLDesdeMapa("Response", resultado.Datos)
-			c.Header("Content-Type", "text/xml")
-			c.String(http.StatusOK, construirSOAPResponseRaw(xmlPayload))
-			fmt.Printf("📝 XML enviado como respuesta SOAP: %s\n", xmlPayload)
-
-		default:
-			dataJSON, err := json.Marshal(resultado.Datos)
-			if err != nil {
-				fmt.Println("❌ Error generando respuesta JSON")
-				c.String(http.StatusInternalServerError, "Error generando respuesta SOAP")
-				return
-			}
-			c.Header("Content-Type", "text/xml")
-			c.String(http.StatusOK, construirSOAPResponse("Response", string(dataJSON)))
-			fmt.Printf("📝 JSON enviado como respuesta SOAP: %s\n", string(dataJSON))
-		}
-	} else {
-		c.JSON(http.StatusOK, resultado)
-	}
 }
 
 // otro handler para el nuevo motor

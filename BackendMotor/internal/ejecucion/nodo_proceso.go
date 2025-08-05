@@ -3,9 +3,12 @@ package ejecucion
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
+	"backendmotor/internal/database"
 	"backendmotor/internal/ejecucion/ejecutores"
+	"backendmotor/internal/estructuras"
 	"backendmotor/internal/models"
 	"backendmotor/internal/utils"
 
@@ -29,20 +32,21 @@ type NodoProceso struct {
 }
 
 // 🧠 Función principal para ejecutar un nodo tipo "proceso"
+
 func ejecutarNodoProceso(
-	n NodoGenerico,
-	resultado map[string]interface{}, // variables actuales del flujo
-	input map[string]interface{}, // input original recibido por el canal
-	db *gorm.DB, // conexión GORM
-	canalCodigo string, // código del canal (para logs)
-	proc models.Proceso, // proceso actual (estructura completa)
-	inicio time.Time, // marca de inicio de ejecución (para calcular duración)
+	n estructuras.NodoGenerico,
+	resultado map[string]interface{},
+	input map[string]interface{},
+	db *gorm.DB,
+	canalCodigo string,
+	proc models.Proceso,
+	inicio time.Time,
 ) (
-	map[string]interface{}, // resultado actualizado (con salidas y fullOutput)
-	map[string]interface{}, // fullOutput como map
-	map[string]interface{}, // asignaciones aplicadas
-	int, string, // estadoFinal, mensajeFinal
-	error, // error real si ocurrió
+	map[string]interface{},
+	map[string]interface{},
+	map[string]interface{},
+	int, string,
+	error,
 ) {
 	asignaciones := make(map[string]interface{})
 	fullOutput := make(map[string]interface{})
@@ -60,50 +64,69 @@ func ejecutarNodoProceso(
 		return resultado, fullOutput, asignaciones, 99, "Servidor no encontrado", fmt.Errorf("servidor no encontrado: %w", err)
 	}
 
-	// 🔧 Paso 3: Crear el ejecutor adecuado (PostgreSQL en este caso)
-	ejecutor, err := ejecutores.NuevoEjecutorPostgreSQL(&servidor)
-	if err != nil {
-		return resultado, fullOutput, asignaciones, 99, "Error al conectar al servidor", fmt.Errorf("error al conectar al servidor: %w", err)
-	}
-
-	// 🧪 Paso 4: Preparar parámetros de entrada desde resultado o input original
-	params := map[string]interface{}{}
-	for _, p := range nodo.ParametrosEntrada {
-		if _, existe := resultado[p.Nombre]; !existe {
-			if val, ok := input[p.Nombre]; ok {
-				resultado[p.Nombre] = val
-				asignaciones[p.Nombre] = val
-			}
-		}
-		if val, ok := resultado[p.Nombre]; ok {
-			params[p.Nombre] = val
-		}
-	}
-
-	// ⚙️ Paso 5: Ejecutar el objeto (función o procedimiento)
+	// 🧠 Paso 3: Detectar tipo de servidor y ejecutar
 	var fullOutputStr string
 	var execErr error
-	if nodo.TipoObjeto == "plpgsql_function" {
-		fullOutputStr, execErr = ejecutor.EjecutarFuncion(nodo.Objeto, params)
-	} else if nodo.TipoObjeto == "plpgsql_procedure" {
-		fullOutputStr, execErr = ejecutor.EjecutarProcedimiento(nodo.Objeto, params)
-	} else {
-		return resultado, fullOutput, asignaciones, 99, "Tipo de objeto no soportado", fmt.Errorf("tipo de objeto no soportado: %s", nodo.TipoObjeto)
+	tipoServidor := strings.ToLower(servidor.Tipo)
+
+	switch tipoServidor {
+	case "postgresql":
+		fullOutputStr, execErr = ejecutores.EjecutarPostgreSQL(n, resultado, servidor)
+	case "rest":
+		fullOutputStr, execErr = ejecutores.EjecutarREST(n, resultado, servidor)
+	default:
+		execErr = fmt.Errorf("tipo de servidor no soportado: %s", servidor.Tipo)
+		return resultado, fullOutput, asignaciones, 99, "Tipo de servidor no soportado", execErr
 	}
 
-	// 📦 Paso 6: Parsear la respuesta (fullOutput) y asignar resultados al contexto
+	// 📦 Paso 4: Guardar FullOutput en resultado
+	resultado["FullOutput"] = fullOutputStr
 	json.Unmarshal([]byte(fullOutputStr), &fullOutput)
 	resultado["fullOutput_"+n.ID] = fullOutput
-	resultado["fullOutput"] = fullOutput // para compatibilidad
+	resultado["fullOutput"] = fullOutput // compatibilidad
 
-	// 🔁 Paso 7: Mapear campos de salida desde fullOutput al resultado global
-	for _, ps := range nodo.ParametrosSalida {
-		if val, ok := fullOutput[ps.Nombre]; ok {
-			resultado[ps.Nombre] = val
+	// ⚙️ Paso 5: Auto-generar parametrosSalida si parsearFullOutput == true
+	if parsear, ok := n.Data["parsearFullOutput"].(bool); ok && parsear {
+		tipoRespuesta := fmt.Sprint(n.Data["tipoRespuesta"])
+		tagPadre := fmt.Sprint(n.Data["tagPadre"])
+
+		existentesRaw, tieneExistentes := n.Data["parametrosSalida"]
+		existentes := []estructuras.Campo{}
+		if tieneExistentes {
+			if existentesBytes, err := json.Marshal(existentesRaw); err == nil {
+				_ = json.Unmarshal(existentesBytes, &existentes)
+			}
+		}
+
+		nuevos, err := estructuras.MapearCamposDesdeFullOutput(fullOutputStr, tipoRespuesta, tagPadre, existentes)
+		if err == nil && len(nuevos) > 0 {
+			n.Data["parametrosSalida"] = nuevos
+		}
+
+		n.Data["parsearFullOutput"] = false
+		_ = database.ActualizarNodoEnFlujo(n)
+	}
+
+	// 🧠 Paso 6: Si hay parametrosSalida definidos, intentar extraer valores reales
+	if salidaRaw, ok := n.Data["parametrosSalida"]; ok {
+		if salidaBytes, err := json.Marshal(salidaRaw); err == nil {
+			var camposSalida []estructuras.Campo
+			if err := json.Unmarshal(salidaBytes, &camposSalida); err == nil {
+				tipoRespuesta := fmt.Sprint(n.Data["tipoRespuesta"])
+				tagPadre := fmt.Sprint(n.Data["tagPadre"])
+				valores, err := estructuras.ExtraerValoresDesdeFullOutput(fullOutputStr, tipoRespuesta, tagPadre, camposSalida)
+				if err == nil {
+					for _, campo := range camposSalida {
+						if val, ok := valores[campo.Nombre]; ok {
+							resultado[campo.Nombre] = val
+						}
+					}
+				}
+			}
 		}
 	}
 
-	// 🚨 Paso 8: Manejo de errores
+	// 🚨 Paso 7: Manejo de errores
 	if execErr != nil {
 		estadoFinal = 99
 		mensajeFinal = "Error en ejecución"
@@ -112,7 +135,7 @@ func ejecutarNodoProceso(
 		resultado["detalleError"] = execErr.Error()
 	}
 
-	// 📝 Paso 9: Registrar en logs
+	// 📝 Paso 8: Registrar en logs
 	log := utils.RegistroEjecucion{
 		Timestamp:     time.Now().Format(time.RFC3339),
 		ProcesoId:     proc.ID,
@@ -120,7 +143,7 @@ func ejecutarNodoProceso(
 		Canal:         canalCodigo,
 		TipoObjeto:    nodo.TipoObjeto,
 		NombreObjeto:  nodo.Objeto,
-		Parametros:    params,
+		Parametros:    input,
 		Resultado:     resultado,
 		FullOutput:    fullOutput,
 		Asignaciones:  asignaciones,
@@ -133,6 +156,6 @@ func ejecutarNodoProceso(
 	}
 	utils.RegistrarEjecucionLog(log)
 
-	// ✅ Paso final: retornar todo lo necesario para continuar el flujo
+	// ✅ Retornar resultado
 	return resultado, fullOutput, asignaciones, estadoFinal, mensajeFinal, execErr
 }

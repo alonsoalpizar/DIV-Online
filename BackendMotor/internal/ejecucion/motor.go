@@ -1,13 +1,15 @@
 package ejecucion
 
 import (
-	"encoding/json"
-	"fmt"
-	"time"
-
 	"backendmotor/internal/database"
+
+	"backendmotor/internal/estructuras"
 	"backendmotor/internal/models"
 	"backendmotor/internal/utils"
+	"encoding/json"
+	"fmt"
+
+	"time"
 )
 
 // EjecutarFlujo es el motor principal que interpreta y ejecuta el flujo de integración definido
@@ -23,7 +25,7 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 
 	// 🧠 Paso 2: Parsear el JSON del flujo
 	var flujo struct {
-		Nodes []NodoGenerico `json:"nodes"`
+		Nodes []estructuras.NodoGenerico `json:"nodes"`
 		Edges []struct {
 			ID           string `json:"id"`
 			Source       string `json:"source"`
@@ -38,7 +40,7 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 	}
 
 	// 🧩 Paso 3: Mapear nodos y conexiones
-	nodosPorID := make(map[string]NodoGenerico)
+	nodosPorID := make(map[string]estructuras.NodoGenerico)
 	siguientesPorID := make(map[string][]string)
 	for _, n := range flujo.Nodes {
 		nodosPorID[n.ID] = n
@@ -48,7 +50,7 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 	}
 
 	// 🔍 Paso 4: Identificar nodo tipo entrada
-	var nodoEntrada NodoGenerico
+	var nodoEntrada estructuras.NodoGenerico
 	for _, n := range flujo.Nodes {
 		if n.Type == "entrada" {
 			nodoEntrada = n
@@ -84,7 +86,18 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 		asignaciones := make(map[string]interface{})
 
 		switch n.Type {
+
 		case "proceso":
+			// ✅ Obtener el servidorId desde n.Data
+			servidorID, ok := n.Data["servidorId"].(string)
+			if !ok || servidorID == "" {
+				erroresPorNodo[n.ID] = true
+				resultado["codigoError"] = 98
+				resultado["mensajeError"] = "servidorId no definido en el nodo"
+				break
+			}
+
+			// 🧠 Ejecutar el nodo tipo proceso desde módulo central
 			newResultado, _, newAsignaciones, estado, _, err := ejecutarNodoProceso(n, resultado, input, db, canalCodigo, proc, inicio)
 			if err != nil {
 				erroresPorNodo[n.ID] = true
@@ -121,7 +134,8 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 			if cumple {
 				if salidaRaw, ok := n.Data["parametrosSalida"]; ok {
 					if salidaBytes, err := json.Marshal(salidaRaw); err == nil {
-						var camposSalida []utils.Campo
+						var camposSalida []estructuras.Campo
+
 						if err := json.Unmarshal(salidaBytes, &camposSalida); err == nil {
 							for _, campo := range camposSalida {
 								if val, ok := resultado[campo.Nombre]; ok {
@@ -134,7 +148,7 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 			} else {
 				if errorRaw, ok := n.Data["parametrosError"]; ok {
 					if errorBytes, err := json.Marshal(errorRaw); err == nil {
-						var camposError []utils.Campo
+						var camposError []estructuras.Campo
 						if err := json.Unmarshal(errorBytes, &camposError); err == nil {
 							for _, campo := range camposError {
 								if val, ok := resultado[campo.Nombre]; ok {
@@ -206,6 +220,25 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 		}, nil
 	}
 
+	utils.RegistrarEjecucionLog(utils.RegistroEjecucion{
+		Timestamp:     time.Now().Format(time.RFC3339),
+		ProcesoId:     proc.ID,
+		NombreProceso: proc.Nombre,
+		Canal:         canalCodigo,
+		TipoObjeto:    "motor",
+		NombreObjeto:  "Ejecución exitosa",
+		Parametros:    resultado,
+		Resultado:     respuestaFinal,
+		FullOutput: map[string]interface{}{
+			"flujoID":   proc.ID,
+			"trigger":   trigger,
+			"estado":    "exito",
+			"visitados": visitados,
+		},
+		Estado:     "ok",
+		DuracionMs: time.Since(inicio).Milliseconds(),
+	})
+
 	return ResultadoEjecucion{
 		Estado:    0,
 		Mensaje:   "Ejecución completada",
@@ -216,7 +249,7 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 }
 
 // 🔧 Función auxiliar para detectar nodos de cierto tipo
-func nodosDeTipo(nodos []NodoGenerico, tipo string) []string {
+func nodosDeTipo(nodos []estructuras.NodoGenerico, tipo string) []string {
 	var encontrados []string
 	for _, n := range nodos {
 		if n.Type == tipo {

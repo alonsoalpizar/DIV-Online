@@ -1,6 +1,7 @@
 package ejecucion
 
 import (
+	"backendmotor/internal/estructuras"
 	"backendmotor/internal/utils"
 	"encoding/json"
 	"fmt"
@@ -8,7 +9,7 @@ import (
 )
 
 func ejecutarNodoCondicion(
-	n NodoGenerico,
+	n estructuras.NodoGenerico,
 	resultado map[string]interface{},
 	codigoCanal string,
 ) (bool, error) {

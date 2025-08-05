@@ -1,6 +1,7 @@
 package ejecucion
 
 import (
+	"backendmotor/internal/estructuras"
 	"encoding/json"
 	"fmt"
 )
@@ -14,7 +15,7 @@ type AsignacionSalida struct {
 
 // ejecutarNodoSalida realiza las asignaciones finales para construir la respuesta del flujo
 func ejecutarNodoSalida(
-	n NodoGenerico, // nodo actual de tipo "salida"
+	n estructuras.NodoGenerico, // nodo actual de tipo "salida"
 	resultado map[string]interface{}, // contexto global con todos los valores
 ) (
 	map[string]interface{}, // respuesta final construida

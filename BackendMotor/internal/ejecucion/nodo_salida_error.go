@@ -1,6 +1,7 @@
 package ejecucion
 
 import (
+	"backendmotor/internal/estructuras"
 	"encoding/json"
 	"fmt"
 )
@@ -14,7 +15,7 @@ type CampoSalidaError struct {
 // ejecutarNodoSalidaError copia los valores definidos como `parametrosEntrada` del nodo tipo salidaError
 // desde el contexto `resultado` hacia la respuesta final del proceso
 func ejecutarNodoSalidaError(
-	n NodoGenerico, // nodo actual tipo "salidaError"
+	n estructuras.NodoGenerico, // nodo actual tipo "salidaError"
 	resultado map[string]interface{}, // variables acumuladas durante el flujo
 ) (
 	map[string]interface{}, // respuesta final con los campos de error

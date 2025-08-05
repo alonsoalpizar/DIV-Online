@@ -1,6 +1,7 @@
 package ejecucion
 
 import (
+	"backendmotor/internal/estructuras"
 	"encoding/json"
 	"fmt"
 )
@@ -17,7 +18,7 @@ type NodoCampoEntrada struct {
 }
 
 // ejecutarNodoEntrada procesa los campos del nodo de tipo entrada
-func ejecutarNodoEntrada(n NodoGenerico, input map[string]interface{}) (map[string]interface{}, map[string]interface{}, error) {
+func ejecutarNodoEntrada(n estructuras.NodoGenerico, input map[string]interface{}) (map[string]interface{}, map[string]interface{}, error) {
 	camposJSON, _ := json.Marshal(n.Data["campos"])
 	var camposEntrada []NodoCampoEntrada
 	json.Unmarshal(camposJSON, &camposEntrada)

@@ -1,10 +1,13 @@
 package ejecutores
 
 import (
+	"backendmotor/internal/estructuras"
+
 	"backendmotor/internal/models"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	_ "github.com/lib/pq"
 )
@@ -83,4 +86,26 @@ func joinStrings(parts []string, sep string) string {
 		result += s
 	}
 	return result
+}
+func EjecutarPostgreSQL(n estructuras.NodoGenerico, resultado map[string]interface{}, servidor models.Servidor) (string, error) {
+	ejecutor, err := NuevoEjecutorPostgreSQL(&servidor)
+	if err != nil {
+		return "", fmt.Errorf("error al conectar a PostgreSQL: %w", err)
+	}
+
+	objeto := fmt.Sprint(n.Data["objeto"])
+	tipo := fmt.Sprint(n.Data["tipoObjeto"])
+	if objeto == "" || tipo == "" {
+		return "", fmt.Errorf("objeto o tipoObjeto no definidos en el nodo")
+	}
+
+	switch strings.ToLower(tipo) {
+	case "funcion", "función", "plpgsql_function":
+		return ejecutor.EjecutarFuncion(objeto, resultado)
+	case "procedimiento", "plpgsql_procedure":
+		return ejecutor.EjecutarProcedimiento(objeto, resultado)
+	default:
+		return "", fmt.Errorf("tipo de objeto no soportado para PostgreSQL: %s", tipo)
+	}
+
 }
