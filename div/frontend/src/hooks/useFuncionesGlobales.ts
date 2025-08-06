@@ -19,7 +19,7 @@ export const useFuncionesGlobales = (
     }
   }, [onChange]);
 
-  const insertarFuncion = useCallback((funcionTexto: string, inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement>) => {
+  const insertarFuncion = useCallback((funcionTexto: string, inputRef?: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>) => {
     if (inputRef?.current) {
       const input = inputRef.current;
       const inicio = input.selectionStart || 0;
@@ -51,7 +51,7 @@ export const useFuncionesGlobales = (
     actualizarValor(nuevoValor);
   }, [valor, actualizarValor]);
 
-  const handleCursorChange = useCallback((inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleCursorChange = useCallback((inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>) => {
     if (inputRef.current) {
       const inicio = inputRef.current.selectionStart || 0;
       const fin = inputRef.current.selectionEnd || 0;

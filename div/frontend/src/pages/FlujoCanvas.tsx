@@ -447,7 +447,20 @@ if (esLineaErrorCondicion && targetNode) {
   return (
     <div style={{ height: "100vh" }}>
       {/* Barra superior */}
-      <div style={{ padding: "10px", display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <div style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: "10px", 
+        display: 'flex', 
+        gap: '10px', 
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e0e0e0',
+        zIndex: 10000,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
         <h2>🧩 Diseñando Proceso: {nombreProceso}</h2>
         <button
           onClick={() => {
@@ -479,7 +492,11 @@ if (esLineaErrorCondicion && targetNode) {
       <PanelObjetos />
 
       {/* Canvas principal */}
-      <div tabIndex={0} style={{ height: "100vh", outline: "none" }}>
+      <div tabIndex={0} style={{ 
+        height: "100vh", 
+        outline: "none",
+        paddingTop: "70px" // Espacio para la barra superior fija
+      }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}

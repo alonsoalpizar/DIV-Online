@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import jsep from "jsep";
-import {
-  obtenerFuncionesGlobales,
-  FuncionGlobal,
-} from "../utils/funcionesGlobales";
 import AyudaFuncionTabla from "../components/Callouts/AyudaFuncionTabla";
 import CampoConFunciones from "../components/CampoConFunciones";
+import { obtenerFuncionesGlobales, FuncionGlobal } from "../utils/funcionesGlobales";
 import type { Campo } from "../types/campo";
 
 // --- Operadores permitidos ---
@@ -60,7 +57,7 @@ const EditorCondicion: React.FC<Props> = ({
   const [parametrosEntrada, setParametrosEntrada] = useState<Campo[]>(iniciales || []);
   const [condiciones, setCondiciones] = useState<CondicionCompuesta[]>([]);
   const [funcionesGlobales, setFuncionesGlobales] = useState<FuncionGlobal[]>([]);
-
+  
   useEffect(() => {
     if (condicion) {
       setTextoLibre(condicion);
@@ -230,7 +227,13 @@ const EditorCondicion: React.FC<Props> = ({
           <>
             <h4 style={{ marginTop: "20px" }}>Condiciones Guiadas</h4>
             {condiciones.map((c, i) => (
-              <div key={i} style={{ display: "flex", gap: "5px", marginBottom: "5px" }}>
+              <div key={i} style={{ 
+                display: "flex", 
+                gap: "10px", 
+                marginBottom: "15px", 
+                alignItems: "flex-start",
+                flexWrap: "wrap"
+              }}>
                 {i > 0 && (
                   <select
                     value={c.union}
@@ -239,35 +242,126 @@ const EditorCondicion: React.FC<Props> = ({
                         union: e.target.value as "AND" | "OR",
                       })
                     }
+                    style={{ 
+                      padding: "8px", 
+                      border: "1px solid #ccc", 
+                      borderRadius: "4px",
+                      minWidth: "70px"
+                    }}
                   >
                     <option value="AND">AND</option>
                     <option value="OR">OR</option>
                   </select>
                 )}
-                <select
-                  value={c.campo}
-                  onChange={(e) => actualizarCondicion(i, { campo: e.target.value })}
-                >
-                  <option value="">(Campo)</option>
-                  {parametrosEntrada.map((campo) => (
-                    <option key={campo.nombre} value={campo.nombre}>
-                      {campo.nombre}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <div>
+                    <select
+                      value={
+                        // Si es un campo que existe o una función conocida, usar el valor
+                        parametrosEntrada.find(p => p.nombre === c.campo) ? c.campo :
+                        funcionesGlobales.find(f => {
+                          const nombreBase = f.nombre.includes('(') ? f.nombre.split('(')[0] : f.nombre;
+                          return `${nombreBase}()` === c.campo;
+                        }) ? c.campo :
+                        c.campo === '__USAR_TABLA__' ? c.campo : 
+                        c.campo && c.campo.length > 0 ? '' : c.campo  // Si hay algo no reconocido, mostrar vacío
+                      }
+                      onChange={(e) => {
+                        const valor = e.target.value;
+                        if (valor === '__USAR_TABLA__') {
+                          // Marcamos para mostrar el selector de función tabla
+                          actualizarCondicion(i, { campo: '__USAR_TABLA__' });
+                        } else {
+                          actualizarCondicion(i, { campo: valor });
+                        }
+                      }}
+                      style={{ 
+                        width: '100%',
+                        padding: "8px", 
+                        border: "1px solid #ccc", 
+                        borderRadius: "4px"
+                      }}
+                    >
+                      <option value="">(Seleccionar)</option>
+                      <optgroup label="📝 Campos">
+                        {parametrosEntrada.map((campo) => (
+                          <option key={campo.nombre} value={campo.nombre}>
+                            {campo.nombre} ({campo.tipo})
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="🔧 Funciones del Sistema">
+                        {funcionesGlobales.filter(f => f.origen === 'estatica').map((funcion) => {
+                          const nombreBase = funcion.nombre.includes('(') ? funcion.nombre.split('(')[0] : funcion.nombre;
+                          const textoFuncion = `${nombreBase}()`;
+                          return (
+                            <option key={funcion.nombre} value={textoFuncion}>
+                              {textoFuncion} - {funcion.descripcion}
+                            </option>
+                          );
+                        })}
+                        <option value="__USAR_TABLA__">📊 Usar función Tabla()...</option>
+                      </optgroup>
+                    </select>
+                    
+                    {/* Mostrar valor actual si es función personalizada */}
+                    {c.campo && c.campo !== '__USAR_TABLA__' && 
+                     !parametrosEntrada.find(p => p.nombre === c.campo) &&
+                     !funcionesGlobales.find(f => {
+                       const nombreBase = f.nombre.includes('(') ? f.nombre.split('(')[0] : f.nombre;
+                       return `${nombreBase}()` === c.campo;
+                     }) && (
+                      <div style={{ 
+                        fontSize: '11px', 
+                        color: '#666', 
+                        marginTop: '2px',
+                        fontStyle: 'italic'
+                      }}>
+                        💡 Función personalizada: {c.campo}
+                      </div>
+                    )}
+                  </div>
+                  {c.campo === '__USAR_TABLA__' && (
+                    <div style={{ marginTop: '5px' }}>
+                      <CampoConFunciones
+                        label=""
+                        value={c.campo === '__USAR_TABLA__' ? '' : c.campo}
+                        onChange={(nuevoCampo) => actualizarCondicion(i, { campo: nuevoCampo })}
+                        placeholder="Usar función o escribir manualmente"
+                        mostrarFunciones={true}
+                        categoriaFunciones="todas"
+                        validarSintaxis={false}
+                        camposDisponibles={parametrosEntrada}
+                      />
+                    </div>
+                  )}
+                </div>
                 <select
                   value={c.operador}
                   onChange={(e) => actualizarCondicion(i, { operador: e.target.value })}
+                  style={{ 
+                    padding: "8px", 
+                    border: "1px solid #ccc", 
+                    borderRadius: "4px",
+                    minWidth: "120px"
+                  }}
                 >
                   {operadores.map((op) => (
                     <option key={op} value={op}>{op}</option>
                   ))}
                 </select>
-                <input
-                  value={c.valor}
-                  onChange={(e) => actualizarCondicion(i, { valor: e.target.value })}
-                  placeholder="valor"
-                />
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <CampoConFunciones
+                    label=""
+                    value={c.valor}
+                    onChange={(nuevoValor) => actualizarCondicion(i, { valor: nuevoValor })}
+                    placeholder="valor o función"
+                    mostrarFunciones={true}
+                    categoriaFunciones="todas"
+                    validarSintaxis={false}
+                    camposDisponibles={parametrosEntrada}
+                  />
+                </div>
                 <button onClick={() => eliminarCondicion(i)}>❌</button>
               </div>
             ))}
@@ -309,6 +403,7 @@ const EditorCondicion: React.FC<Props> = ({
                 mostrarFunciones={true}
                 categoriaFunciones="todas"
                 validarSintaxis={false}
+                camposDisponibles={parametrosEntrada}
               />
               <div style={{ marginTop: 10 }}>
                 <strong>Vista previa:</strong>
@@ -332,32 +427,6 @@ const EditorCondicion: React.FC<Props> = ({
           )}
         </div>
 
-        {modoAvanzado && funcionesGlobales.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <strong>Funciones del sistema y tablas:</strong>
-            <ul style={{
-              listStyle: "none", paddingLeft: 0, fontSize: "0.9em", maxHeight: 200, overflowY: "auto",
-            }}>
-              {funcionesGlobales.map((f, i) => (
-                <li key={i} title={f.descripcion} onClick={() => {
-                  setTextoLibre((prev) =>
-                    prev.trim()
-                      ? prev.trimEnd() + "\n" + (f.ejemplo || f.nombre + "()")
-                      : f.ejemplo || f.nombre + "()"
-                  );
-                }} style={{
-                  background: f.origen === "tabla" ? "#fff7e6" : "#e6f2ff",
-                  border: "1px solid #ccc", borderRadius: 4,
-                  padding: "6px 8px", marginBottom: 6,
-                  fontFamily: "monospace", cursor: "pointer",
-                }}>
-                  <code style={{ fontWeight: 600 }}>{f.nombre}</code>
-                  <span style={{ marginLeft: 8, color: "#555" }}>{f.descripcion}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {modoAvanzado && <AyudaFuncionTabla />}
 

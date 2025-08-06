@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import React, { JSX } from 'react';
-import CampoConFunciones from '../components/CampoConFunciones';
 
 // --- Tipos e interfaces ---
 interface Campo {
@@ -212,13 +211,11 @@ const EditorSalida: React.FC<Props> = ({
             <option value="string">String</option>
           </select>
 
-          <CampoConFunciones
-            label="Tag Padre (opcional)"
+          <label>Tag Padre (opcional):</label>
+          <input
             value={tagPadre}
-            onChange={setTagPadre}
-            placeholder="Ej: resultadoClientes, UUID(), 'clientes_' + Hoy()"
-            categoriaFunciones="texto"
-            mostrarFunciones={true}
+            onChange={e => setTagPadre(e.target.value)}
+            placeholder="Ej: resultadoClientes"
           />
 
           <h4>📤 Campos de Salida</h4>

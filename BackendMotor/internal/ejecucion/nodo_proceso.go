@@ -9,6 +9,7 @@ import (
 	"backendmotor/internal/database"
 	"backendmotor/internal/ejecucion/ejecutores"
 	"backendmotor/internal/estructuras"
+	"backendmotor/internal/functions"
 	"backendmotor/internal/models"
 	"backendmotor/internal/utils"
 
@@ -62,6 +63,17 @@ func ejecutarNodoProceso(
 	var servidor models.Servidor
 	if err := db.First(&servidor, "id = ?", nodo.ServidorID).Error; err != nil {
 		return resultado, fullOutput, asignaciones, 99, "Servidor no encontrado", fmt.Errorf("servidor no encontrado: %w", err)
+	}
+
+	// 📋 Paso 2.5: Procesar asignaciones de parámetros de entrada
+	parametrosResueltos, err := procesarAsignacionesParametros(n, resultado)
+	if err != nil {
+		return resultado, fullOutput, asignaciones, 99, "Error procesando asignaciones", fmt.Errorf("error procesando asignaciones: %w", err)
+	}
+	// Actualizar el resultado con los parámetros resueltos para que estén disponibles para el ejecutor
+	for k, v := range parametrosResueltos {
+		resultado[k] = v
+		asignaciones[k] = v
 	}
 
 	// 🧠 Paso 3: Detectar tipo de servidor y ejecutar
@@ -163,4 +175,117 @@ func ejecutarNodoProceso(
 
 	// ✅ Retornar resultado
 	return resultado, fullOutput, asignaciones, estadoFinal, mensajeFinal, execErr
+}
+
+// Estructura para las asignaciones en nodo proceso
+type AsignacionProceso struct {
+	Destino         string `json:"destino"`
+	Tipo            string `json:"tipo"`
+	Valor           string `json:"valor"`
+	// Campos específicos para tipo "tabla"
+	Tabla           string `json:"tabla,omitempty"`
+	Clave           string `json:"clave,omitempty"`
+	Campo           string `json:"campo,omitempty"`
+	EsClaveVariable bool   `json:"esClaveVariable,omitempty"`
+}
+
+// procesarAsignacionesParametros procesa las asignaciones de parámetros antes de ejecutar el SP
+func procesarAsignacionesParametros(n estructuras.NodoGenerico, contexto map[string]interface{}) (map[string]interface{}, error) {
+	// 🧠 Paso 1: Extraer el bloque de asignaciones del nodo
+	asignacionesJSON, _ := json.Marshal(n.Data["asignaciones"])
+
+	// 🧠 Paso 2: Mapear asignaciones agrupadas por nodo fuente
+	var asignaciones map[string][]AsignacionProceso
+	json.Unmarshal(asignacionesJSON, &asignaciones)
+
+	// 📦 Estructura para parámetros resueltos
+	parametrosResueltos := make(map[string]interface{})
+
+	// 🔄 Paso 3: Recorrer todas las asignaciones
+	for nodoFuente, asigns := range asignaciones {
+		fmt.Printf("🔗 Procesando asignaciones desde nodo: %s\n", nodoFuente)
+		
+		for _, asign := range asigns {
+			fmt.Printf("📝 Procesando asignación: %s = %s (%s)\n", asign.Destino, asign.Valor, asign.Tipo)
+
+			// 🔁 Tipo: campo → copiar desde variable existente en contexto
+			if asign.Tipo == "campo" {
+				if val, ok := contexto[asign.Valor]; ok {
+					parametrosResueltos[asign.Destino] = val
+					fmt.Printf("✅ Campo resuelto: %s = %v\n", asign.Destino, val)
+				} else {
+					fmt.Printf("⚠️ Campo no encontrado en contexto: %s\n", asign.Valor)
+				}
+
+			// 🔁 Tipo: literal → asignar valor directamente
+			} else if asign.Tipo == "literal" {
+				parametrosResueltos[asign.Destino] = asign.Valor
+				fmt.Printf("✅ Literal asignado: %s = %s\n", asign.Destino, asign.Valor)
+
+			// 🚀 Tipo: sistema → ejecutar función del sistema
+			} else if asign.Tipo == "sistema" {
+				valor, err := resolverFuncionSistemaEnProceso(asign.Valor, contexto)
+				if err != nil {
+					fmt.Printf("❌ Error ejecutando función %s: %v\n", asign.Valor, err)
+					return nil, fmt.Errorf("error ejecutando función %s: %w", asign.Valor, err)
+				}
+				parametrosResueltos[asign.Destino] = valor
+				fmt.Printf("✅ [nodo_proceso.go] Función ejecutada: %s = %v\n", asign.Destino, valor)
+
+			// 🗃️ Tipo: tabla → consultar tabla del sistema
+			} else if asign.Tipo == "tabla" {
+				valor, err := resolverTablaEnProceso(asign, contexto)
+				if err != nil {
+					fmt.Printf("❌ Error consultando tabla %s: %v\n", asign.Tabla, err)
+					return nil, fmt.Errorf("error consultando tabla %s: %w", asign.Tabla, err)
+				}
+				parametrosResueltos[asign.Destino] = valor
+				fmt.Printf("✅ [nodo_proceso.go] Tabla consultada: %s = %v\n", asign.Destino, valor)
+			}
+		}
+	}
+
+	return parametrosResueltos, nil
+}
+
+// resolverFuncionSistemaEnProceso resuelve funciones del sistema para parámetros de entrada
+func resolverFuncionSistemaEnProceso(expresion string, contexto map[string]interface{}) (interface{}, error) {
+	// Usar la función centralizada de utils que tiene TODAS las funciones
+	return utils.EjecutarFuncionSistema(expresion, contexto)
+}
+
+// resolverTablaEnProceso resuelve consultas a tablas del sistema en nodos de proceso
+func resolverTablaEnProceso(asign AsignacionProceso, contexto map[string]interface{}) (interface{}, error) {
+	// Determinar la clave - compatibilidad con ambas estructuras
+	clave := asign.Clave
+	if clave == "" {
+		clave = asign.Valor // Fallback para compatibilidad
+	}
+	
+	// Validar que tenemos los campos necesarios
+	if asign.Tabla == "" || clave == "" || asign.Campo == "" {
+		return nil, fmt.Errorf("asignación de tabla requiere tabla, clave y campo - recibido: tabla='%s', clave='%s', campo='%s'", asign.Tabla, clave, asign.Campo)
+	}
+
+	fmt.Printf("🗃️ [nodo_proceso.go] Resolviendo tabla: %s, clave: %s, campo: %s\n", asign.Tabla, clave, asign.Campo)
+
+	// Crear resolver y ejecutar consulta
+	resolver := functions.NewResolver(contexto)
+	
+	// Resolver la clave si es variable (viene del contexto)
+	if asign.EsClaveVariable {
+		if val, exists := contexto[clave]; exists {
+			clave = fmt.Sprintf("%v", val)
+			fmt.Printf("🔄 [nodo_proceso.go] Clave variable resuelta: %s → %s\n", asign.Clave, clave)
+		} else {
+			return nil, fmt.Errorf("clave variable '%s' no encontrada en contexto", clave)
+		}
+	}
+
+	valor, err := resolver.ResolverTabla(asign.Tabla, clave, asign.Campo)
+	if err != nil {
+		return nil, fmt.Errorf("error resolviendo tabla: %w", err)
+	}
+
+	return valor, nil
 }

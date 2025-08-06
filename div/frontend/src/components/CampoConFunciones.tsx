@@ -4,6 +4,11 @@ import PanelFuncionesGlobales from './PanelFuncionesGlobales';
 import { FaCode, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './CampoConFunciones.css';
 
+interface CampoDisponible {
+  nombre: string;
+  tipo: string;
+}
+
 interface Props {
   label: string;
   value: string;
@@ -16,6 +21,7 @@ interface Props {
   mostrarFunciones?: boolean;
   categoriaFunciones?: string;
   validarSintaxis?: boolean;
+  camposDisponibles?: CampoDisponible[]; // Campos del contexto actual
 }
 
 const CampoConFunciones: React.FC<Props> = ({
@@ -29,7 +35,8 @@ const CampoConFunciones: React.FC<Props> = ({
   required = false,
   mostrarFunciones = true,
   categoriaFunciones = 'todas',
-  validarSintaxis = true
+  validarSintaxis = true,
+  camposDisponibles = []
 }) => {
   const [mostrarPanelFunciones, setMostrarPanelFunciones] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -101,6 +108,7 @@ const CampoConFunciones: React.FC<Props> = ({
               onInsertarFuncion={handleInsertarFuncion}
               mostrarCategoria={categoriaFunciones}
               compacto={true}
+              camposDisponibles={camposDisponibles}
             />
           </div>
         )}

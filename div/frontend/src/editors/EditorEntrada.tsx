@@ -9,7 +9,7 @@ interface Campo {
   nombre: string;
   tipo: string;
   asignacion?: {
-    tipo: '' | 'literal' | 'sistema' | 'tabla';
+    tipo: '' | 'literal' | 'funcion' | 'tabla';
     valor: string;
     tabla?: string;
     campoResultado?: string;
@@ -57,12 +57,28 @@ const EditorEntrada: React.FC<Props> = ({ label, campos, onGuardar, onCancelar }
   };
 
   // --- Actualiza la asignación de un campo específico ---
-  const actualizarAsignacion = (index: number, cambios: Partial<Campo['asignacion']>) => {
-    const nuevos = [...camposLocal];
-    const prev = nuevos[index].asignacion || { tipo: '', valor: '' };
-    nuevos[index].asignacion = { ...prev, ...cambios };
-    setCamposLocal(nuevos);
-  };
+const actualizarAsignacion = (index: number, cambios: Partial<Campo['asignacion']>) => {
+  const nuevos = [...camposLocal];
+  const prev = nuevos[index].asignacion || { tipo: '', valor: '' };
+
+  const nuevoTipo = cambios?.tipo || prev.tipo;
+
+  let actualizada: Campo['asignacion'] = { ...prev, ...cambios };
+
+  if (nuevoTipo === "tabla" && cambios) {
+    if ("valor" in cambios && cambios.valor !== undefined) {
+      (actualizada as any).clave = cambios.valor;
+
+    }
+    if ("campoResultado" in cambios && cambios.campoResultado !== undefined) {
+      (actualizada as any).campo = cambios.campoResultado;
+    }
+  }
+
+  nuevos[index].asignacion = actualizada;
+  setCamposLocal(nuevos);
+};
+
 
   // --- Obtiene los campos de una tabla seleccionada ---
   const obtenerCamposDeTabla = (nombreTabla: string | undefined) => {
@@ -193,7 +209,7 @@ const EditorEntrada: React.FC<Props> = ({ label, campos, onGuardar, onCancelar }
                 >
                   <option value="">🚫 Sin asignar</option>
                   <option value="literal">✍️ Literal</option>
-                  <option value="sistema">⚙️ Sistema</option>
+                  <option value="funcion">⚙️ Sistema</option>
                   <option value="tabla">📊 Tabla</option>
                 </select>
 
@@ -208,37 +224,38 @@ const EditorEntrada: React.FC<Props> = ({ label, campos, onGuardar, onCancelar }
                 )}
 
                 {/* Asignación tipo sistema */}
-                {campo.asignacion?.tipo === 'sistema' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                    <input
-                      placeholder="Ej: Ahora()"
-                      value={campo.asignacion?.valor || ''}
-                      onChange={e => actualizarAsignacion(i, { valor: e.target.value })}
-                    />
-                    <select
-                      onChange={e => {
-                        const func = funcionesSistema.find(f => f.nombre === e.target.value);
-                        if (func) {
-                          actualizarAsignacion(i, { valor: func.ejemplo || `${func.nombre}()` });
-                        }
-                      }}
-                      defaultValue=""
-                      style={{
-                        padding: '4px',
-                        borderRadius: '4px',
-                        border: '1px solid #ccc',
-                        fontSize: '0.9em'
-                      }}
-                    >
-                      <option value="">🧠 Elegir función de sistema...</option>
-                      {funcionesSistema.map((f, idx) => (
-                        <option key={f.nombre + '-' + idx} value={f.nombre}>
-                          {f.nombre}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                {campo.asignacion?.tipo === 'funcion' && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+    <input
+      placeholder="Ej: Ahora()"
+      value={campo.asignacion?.valor || ''}
+      onChange={e => actualizarAsignacion(i, { valor: e.target.value })}
+    />
+    <select
+      onChange={e => {
+        const func = funcionesSistema.find(f => f.nombre === e.target.value);
+        if (func) {
+          actualizarAsignacion(i, { valor: func.ejemplo || `${func.nombre}()` });
+        }
+      }}
+      defaultValue=""
+      style={{
+        padding: '4px',
+        borderRadius: '4px',
+        border: '1px solid #ccc',
+        fontSize: '0.9em'
+      }}
+    >
+      <option value="">🧠 Elegir función de sistema...</option>
+      {funcionesSistema.map((f, idx) => (
+        <option key={f.nombre + '-' + idx} value={f.nombre}>
+          {f.nombre}
+        </option>
+      ))}
+    </select>
+  </div>
+)}
+
 
                 {/* Asignación tipo tabla */}
                 {campo.asignacion?.tipo === 'tabla' && (
