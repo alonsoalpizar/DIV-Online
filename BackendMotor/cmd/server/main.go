@@ -8,6 +8,7 @@ import (
 	"backendmotor/internal/database" // GORM
 	"backendmotor/internal/monitoring"
 	"backendmotor/internal/routes"
+	"backendmotor/internal/scheduler"
 	"backendmotor/pkg/logging"
 )
 
@@ -26,6 +27,10 @@ func main() {
 	database.InitDB()
 	log.Println("✅ GORM listo (database.DB)")
 
+	// Iniciar scheduler de tareas programadas
+	taskScheduler := scheduler.NuevoScheduler()
+	taskScheduler.Iniciar()
+	
 	// Iniciar router Principales
 	router := routes.SetupRouter()
 

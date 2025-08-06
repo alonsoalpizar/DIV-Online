@@ -3,6 +3,7 @@ package controllers
 import (
 	"backendmotor/internal/config"
 	"backendmotor/internal/models"
+	"backendmotor/internal/ejecucion"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -96,4 +97,45 @@ func DeleteProceso(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// POST /ejecutar-proceso
+func EjecutarProceso(c *gin.Context) {
+	var request struct {
+		ProcesoID  string                 `json:"procesoId" binding:"required"`
+		Parametros map[string]interface{} `json:"parametros"`
+		Canal      string                 `json:"canal"`
+		Trigger    string                 `json:"trigger"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "JSON inválido: " + err.Error()})
+		return
+	}
+
+	// Usar canal por defecto si no se especifica
+	if request.Canal == "" {
+		request.Canal = "API"
+	}
+	
+	// Usar trigger por defecto si no se especifica
+	if request.Trigger == "" {
+		request.Trigger = "api"
+	}
+
+	// Ejecutar el proceso usando el motor
+	resultado, err := ejecucion.EjecutarFlujo(request.ProcesoID, request.Parametros, request.Canal, request.Trigger)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error ejecutando proceso: " + err.Error(),
+			"procesoId": request.ProcesoID,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"mensaje": "Proceso ejecutado exitosamente",
+		"procesoId": request.ProcesoID,
+		"resultado": resultado,
+	})
 }

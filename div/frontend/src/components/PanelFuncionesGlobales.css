@@ -1,0 +1,225 @@
+/* === PANEL DE FUNCIONES GLOBALES === */
+
+.panel-funciones {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  max-height: 500px;
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-sm);
+}
+
+.panel-funciones.compacto {
+  max-height: 300px;
+  font-size: var(--text-xs);
+}
+
+/* === HEADER === */
+.funciones-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.funciones-header h4 {
+  margin: 0 0 var(--space-3) 0;
+  color: var(--gray-900);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.panel-funciones.compacto .funciones-header h4 {
+  font-size: var(--text-sm);
+}
+
+.funciones-search {
+  margin-bottom: var(--space-3);
+}
+
+.search-funciones {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: white;
+}
+
+.search-funciones:focus {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.funciones-tabs {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.funciones-tabs button {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--gray-300);
+  background: white;
+  color: var(--gray-600);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.funciones-tabs button:hover {
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
+.funciones-tabs button.active {
+  background: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
+}
+
+/* === LISTA === */
+.funciones-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.loading-funciones,
+.no-funciones {
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--gray-500);
+  font-style: italic;
+}
+
+/* === CATEGORÍAS === */
+.categoria-funciones {
+  margin-bottom: var(--space-4);
+}
+
+.categoria-titulo {
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+/* === ITEMS DE FUNCIÓN === */
+.funcion-item {
+  padding: var(--space-3);
+  margin-bottom: var(--space-2);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: white;
+}
+
+.funcion-item:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+  transform: translateX(2px);
+}
+
+.funcion-item:active {
+  transform: scale(0.98);
+}
+
+.panel-funciones.compacto .funcion-item {
+  padding: var(--space-2);
+}
+
+.funcion-nombre {
+  font-weight: 600;
+  color: var(--primary-700);
+  margin-bottom: var(--space-1);
+  font-family: 'Courier New', monospace;
+}
+
+.panel-funciones.compacto .funcion-nombre {
+  font-size: var(--text-xs);
+}
+
+.funcion-descripcion {
+  color: var(--gray-600);
+  margin-bottom: var(--space-2);
+  line-height: 1.4;
+}
+
+.funcion-ejemplo {
+  background: var(--gray-50);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+  border-left: 3px solid var(--primary-400);
+}
+
+.funcion-ejemplo code {
+  color: var(--gray-800);
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-xs);
+}
+
+.funcion-retorno {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.retorno-badge {
+  background: var(--success-100);
+  color: var(--success-700);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+/* === SCROLLBAR === */
+.funciones-lista::-webkit-scrollbar {
+  width: 4px;
+}
+
+.funciones-lista::-webkit-scrollbar-track {
+  background: var(--gray-100);
+}
+
+.funciones-lista::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 2px;
+}
+
+.funciones-lista::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .panel-funciones {
+    max-height: 400px;
+  }
+  
+  .funciones-tabs {
+    gap: var(--space-0-5);
+  }
+  
+  .funciones-tabs button {
+    padding: var(--space-0-5) var(--space-1-5);
+    font-size: 10px;
+  }
+  
+  .funcion-item {
+    padding: var(--space-2);
+  }
+  
+  .funcion-descripcion {
+    font-size: var(--text-xs);
+  }
+}

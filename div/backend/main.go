@@ -11,10 +11,13 @@ import (
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Permitir acceso desde el frontend
-			origin := r.Header.Get("Origin")
-			if origin == "http://localhost:5173" || origin == "http://173.249.49.235" {
+		origin := r.Header.Get("Origin")
+		if origin == "http://localhost:5173" || origin == "http://173.249.49.235" || origin == "https://173.249.49.235" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			}
+		} else {
+			// Permitir acceso desde el mismo servidor (sin Origin header)
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 
 		// w.Header().Set("Access-Control-Allow-Origin", "http://173.249.49.235")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")

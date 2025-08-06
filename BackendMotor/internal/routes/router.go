@@ -34,6 +34,9 @@ func SetupRouter() *gin.Engine {
 	router.POST("/procesos", controllers.CreateProceso)
 	router.PUT("/procesos/:id", controllers.UpdateProceso)
 	router.DELETE("/procesos/:id", controllers.DeleteProceso)
+	
+	// Ejecución de procesos
+	router.POST("/ejecutar-proceso", controllers.EjecutarProceso)
 
 	// Rutas de canal_procesos
 	router.GET("/canal-procesos", controllers.GetCanalProcesos)

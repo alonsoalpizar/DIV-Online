@@ -1,13 +1,14 @@
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import '../styles/design-system.css';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div style={{ display: 'flex' }}>
+    <div className="layout-container">
       <Sidebar />
-      <div style={{ flex: 1 }}>
+      <div className="layout-main">
         <Topbar />
-        <main className="main-content">
+        <main className="main-content fade-in">
           {children}
         </main>
       </div>

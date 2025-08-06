@@ -10,6 +10,11 @@ import FlujoCanvas from './pages/FlujoCanvas';
 import AsignarProcesosACanal from './components/AsignarProcesosACanal';
 import WrapperAsignarProcesosACanal from "./pages/WrapperAsignarProcesosACanal";
 import ConfiguracionSistema from './pages/ConfiguracionSistema';
+import TareasProgramadas from './pages/TareasProgramadas';
+import './styles/design-system.css';
+import './styles/home.css';
+import './styles/pages.css';
+import './styles/forms.css';
 
 
 const App = () => {
@@ -26,6 +31,7 @@ const App = () => {
         {/* <Route path="/canales/:id/asignar-procesos" element={<AsignarProcesosACanal />} /> */}
         <Route path="/canales/:id/asignar-procesos" element={<WrapperAsignarProcesosACanal />} />
         <Route path="/configuracion" element={<ConfiguracionSistema />} />
+        <Route path="/tareas-programadas" element={<TareasProgramadas />} />
       </Routes>
     </Layout>
   );

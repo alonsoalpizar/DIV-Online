@@ -35,7 +35,7 @@ func Connect() {
 	DB = database
 
 		// Migraciones automáticas
-		err = DB.AutoMigrate(&models.Servidor{}, &models.Canal{}, &models.Parametro{}, &models.Tabla{}, &models.Proceso{}, &models.CanalProceso{},&models.Configuracion{})
+		err = DB.AutoMigrate(&models.Servidor{}, &models.Canal{}, &models.Parametro{}, &models.Tabla{}, &models.Proceso{}, &models.CanalProceso{}, &models.Configuracion{}, &models.TareaProgramada{}, &models.EjecucionTarea{})
 		if err != nil {
 			log.Fatal("Error al migrar las tablas: ", err)
 		}

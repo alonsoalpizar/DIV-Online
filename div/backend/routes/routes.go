@@ -46,6 +46,14 @@ func SetupRoutes() *mux.Router {
 	router.HandleFunc("/canal-procesos/{id}", controllers.EditarAsignacionProceso).Methods("PUT")
 	router.HandleFunc("/canal-procesos/{id}", controllers.DesasignarProceso).Methods("DELETE")
 
+	// Rutas de Búsqueda
+	router.HandleFunc("/search", controllers.SearchGlobal).Methods("GET")
+	router.HandleFunc("/search/type", controllers.SearchByType).Methods("GET")
+
+	// Rutas de Consecutividad
+	router.HandleFunc("/consecutivo/servidor", controllers.ObtenerProximoCodigoServidor).Methods("GET")
+	router.HandleFunc("/consecutivo/proceso", controllers.ObtenerProximoCodigoProceso).Methods("GET")
+
 	//Para hacer Ping desde el Frontend
 	router.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -57,6 +65,15 @@ func SetupRoutes() *mux.Router {
 	router.HandleFunc("/configuracion", controllers.CreateConfiguracion).Methods("POST")
 	router.HandleFunc("/configuracion", controllers.GetConfiguracion).Methods("GET")
 	router.HandleFunc("/configuracion", controllers.UpdateConfiguracion).Methods("PUT")
+
+	// Rutas de Tareas Programadas
+	router.HandleFunc("/tareas-programadas", controllers.ListarTareasProgramadas).Methods("GET")
+	router.HandleFunc("/tareas-programadas", controllers.CrearTareaProgramada).Methods("POST")
+	router.HandleFunc("/tareas-programadas/{id}", controllers.ObtenerTareaProgramada).Methods("GET")
+	router.HandleFunc("/tareas-programadas/{id}", controllers.ActualizarTareaProgramada).Methods("PUT")
+	router.HandleFunc("/tareas-programadas/{id}", controllers.EliminarTareaProgramada).Methods("DELETE")
+	router.HandleFunc("/tareas-programadas/{id}/ejecutar", controllers.EjecutarTareaManual).Methods("POST")
+	router.HandleFunc("/tareas-programadas/{id}/ejecuciones", controllers.ObtenerEjecucionesTarea).Methods("GET")
 
 	return router
 }

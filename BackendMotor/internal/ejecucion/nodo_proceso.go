@@ -74,6 +74,8 @@ func ejecutarNodoProceso(
 		fullOutputStr, execErr = ejecutores.EjecutarPostgreSQL(n, resultado, servidor)
 	case "rest":
 		fullOutputStr, execErr = ejecutores.EjecutarREST(n, resultado, servidor)
+	case "soap":
+		fullOutputStr, execErr = ejecutores.EjecutarSOAP(n, resultado, servidor, proc.ID)
 	default:
 		execErr = fmt.Errorf("tipo de servidor no soportado: %s", servidor.Tipo)
 		return resultado, fullOutput, asignaciones, 99, "Tipo de servidor no soportado", execErr
@@ -104,7 +106,10 @@ func ejecutarNodoProceso(
 		}
 
 		n.Data["parsearFullOutput"] = false
-		_ = database.ActualizarNodoEnFlujo(n)
+		if proc.ID != "" && len(proc.ID) > 0 {
+			n.ProcesoID = proc.ID
+			_ = database.ActualizarNodoEnFlujo(n)
+		}
 	}
 
 	// 🧠 Paso 6: Si hay parametrosSalida definidos, intentar extraer valores reales

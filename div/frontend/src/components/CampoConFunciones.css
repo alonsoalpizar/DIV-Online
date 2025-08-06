@@ -1,0 +1,190 @@
+/* === CAMPO CON FUNCIONES === */
+
+.campo-con-funciones {
+  margin-bottom: var(--space-4);
+}
+
+.campo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.campo-label {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.campo-label.required::after {
+  content: ' *';
+  color: var(--error-500);
+}
+
+.btn-toggle-funciones {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--gray-300);
+  background: white;
+  color: var(--gray-600);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-xs);
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-funciones:hover {
+  background: var(--gray-50);
+  border-color: var(--primary-300);
+  color: var(--primary-600);
+}
+
+.btn-toggle-funciones.active {
+  background: var(--primary-100);
+  border-color: var(--primary-400);
+  color: var(--primary-700);
+}
+
+.campo-content {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.input-container {
+  flex: 1;
+}
+
+.campo-input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  background: white;
+  color: var(--gray-900);
+  font-size: var(--text-sm);
+  font-family: 'Courier New', monospace;
+  transition: all var(--transition-fast);
+  line-height: 1.5;
+}
+
+.campo-input:focus {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.campo-input.error {
+  border-color: var(--error-400);
+  box-shadow: 0 0 0 3px var(--error-100);
+}
+
+.campo-input::placeholder {
+  color: var(--gray-500);
+  font-family: inherit;
+}
+
+/* Textarea específico */
+textarea.campo-input {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* === VALIDACIÓN === */
+.validation-errors {
+  margin-top: var(--space-2);
+}
+
+.validation-error {
+  color: var(--error-600);
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  background: var(--error-50);
+  border: 1px solid var(--error-200);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-1);
+}
+
+/* === PANEL DE FUNCIONES === */
+.panel-funciones-container {
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.campo-help {
+  font-size: var(--text-xs);
+  color: var(--gray-500);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-400);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* === RESALTADO DE FUNCIONES === */
+.campo-input:global(.funcion-resaltada) {
+  background: var(--primary-100);
+  color: var(--primary-800);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .campo-content {
+    flex-direction: column;
+  }
+  
+  .panel-funciones-container {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .btn-toggle-funciones {
+    padding: var(--space-1);
+    font-size: 10px;
+  }
+  
+  .campo-input {
+    font-size: var(--text-xs);
+  }
+}
+
+/* === ESTADOS === */
+.campo-input:disabled {
+  background: var(--gray-100);
+  color: var(--gray-500);
+  cursor: not-allowed;
+}
+
+.campo-con-funciones:hover .btn-toggle-funciones {
+  opacity: 1;
+}
+
+.btn-toggle-funciones {
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+/* === ANIMACIONES === */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.panel-funciones-container {
+  animation: slideInRight 0.3s ease-out;
+}

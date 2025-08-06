@@ -113,12 +113,62 @@ func GinMotorHandler(c *gin.Context) {
 }
 
 func construirXMLDesdeMapa(etiquetaRaiz string, datos map[string]interface{}) string {
+	fmt.Printf("🏗️ construirXMLDesdeMapa: etiqueta='%s', datos=%v\n", etiquetaRaiz, datos)
 	xml := fmt.Sprintf("<%s>", etiquetaRaiz)
 	for k, v := range datos {
-		xml += fmt.Sprintf("<%s>%v</%s>", k, v, k)
+		elementoXML := construirElementoXML(k, v)
+		fmt.Printf("🧱 Elemento generado para '%s': %s\n", k, elementoXML)
+		xml += elementoXML
 	}
 	xml += fmt.Sprintf("</%s>", etiquetaRaiz)
+	fmt.Printf("🎯 XML final construido: %s\n", xml)
 	return xml
+}
+
+// construirElementoXML maneja la conversión recursiva de diferentes tipos de datos a XML
+func construirElementoXML(nombre string, valor interface{}) string {
+	fmt.Printf("🔍 construirElementoXML: nombre='%s', tipo=%T, valor=%v\n", nombre, valor, valor)
+	switch v := valor.(type) {
+	case []map[string]interface{}:
+		// Array específico de mapas - crear múltiples elementos XML con el mismo nombre
+		xml := ""
+		for _, item := range v {
+			xml += fmt.Sprintf("<%s>", nombre)
+			for subKey, subVal := range item {
+				xml += construirElementoXML(subKey, subVal)
+			}
+			xml += fmt.Sprintf("</%s>", nombre)
+		}
+		return xml
+	case []interface{}:
+		// Array de elementos - crear múltiples elementos XML con el mismo nombre
+		xml := ""
+		for _, item := range v {
+			if itemMap, ok := item.(map[string]interface{}); ok {
+				// Si el item es un mapa, expandir sus campos como sub-elementos
+				xml += fmt.Sprintf("<%s>", nombre)
+				for subKey, subVal := range itemMap {
+					xml += construirElementoXML(subKey, subVal)
+				}
+				xml += fmt.Sprintf("</%s>", nombre)
+			} else {
+				// Si el item es un valor simple, crear elemento simple
+				xml += fmt.Sprintf("<%s>%v</%s>", nombre, item, nombre)
+			}
+		}
+		return xml
+	case map[string]interface{}:
+		// Objeto - expandir como sub-elementos
+		xml := fmt.Sprintf("<%s>", nombre)
+		for subKey, subVal := range v {
+			xml += construirElementoXML(subKey, subVal)
+		}
+		xml += fmt.Sprintf("</%s>", nombre)
+		return xml
+	default:
+		// Valor simple - elemento XML directo
+		return fmt.Sprintf("<%s>%v</%s>", nombre, valor, nombre)
+	}
 }
 
 func construirSOAPResponseRaw(innerXML string) string {

@@ -1,0 +1,229 @@
+/* Sidebar Moderno */
+
+.sidebar-modern {
+  width: 280px;
+  height: 100vh;
+  background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-800) 100%);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--gray-700);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header del Sidebar */
+.sidebar-header {
+  padding: var(--space-6) var(--space-5);
+  border-bottom: 1px solid var(--gray-700);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sidebar-logo svg {
+  font-size: var(--text-2xl);
+  color: var(--primary-400);
+}
+
+.sidebar-logo span {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: white;
+  letter-spacing: 1px;
+}
+
+.sidebar-title {
+  font-size: var(--text-sm);
+  color: var(--gray-400);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Navegación */
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-4) 0;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  margin: 0 var(--space-3);
+  border-radius: var(--radius-lg);
+  color: var(--gray-300);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(4px);
+}
+
+.sidebar-item.active {
+  background: linear-gradient(90deg, var(--primary-600), var(--primary-500));
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: -var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--primary-300);
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: var(--text-base);
+}
+
+.sidebar-item-label {
+  flex: 1;
+}
+
+.sidebar-item-badge {
+  background: var(--primary-500);
+  color: white;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  min-width: 20px;
+  text-align: center;
+  line-height: 1;
+}
+
+.sidebar-item.active .sidebar-item-badge {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-item-badge.loading {
+  animation: pulse-badge 1.5s ease-in-out infinite;
+  opacity: 0.7;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Footer del Sidebar */
+.sidebar-footer {
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--gray-700);
+}
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: var(--text-sm);
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: white;
+  margin-bottom: var(--space-1);
+}
+
+.user-status {
+  font-size: var(--text-xs);
+  color: var(--success-400);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.user-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--success-400);
+  border-radius: 50%;
+  animation: pulse-status 2s infinite;
+}
+
+/* Animaciones */
+@keyframes pulse-status {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Scrollbar para la navegación */
+.sidebar-nav::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--gray-600);
+  border-radius: 2px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar-modern {
+    width: 260px;
+    transform: translateX(-100%);
+    position: fixed;
+    z-index: var(--z-modal);
+    transition: transform var(--transition-normal);
+  }
+
+  .sidebar-modern.open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-modern {
+    width: 100vw;
+  }
+}

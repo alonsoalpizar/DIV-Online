@@ -5,6 +5,7 @@ import {
   FuncionGlobal,
 } from "../utils/funcionesGlobales";
 import AyudaFuncionTabla from "../components/Callouts/AyudaFuncionTabla";
+import CampoConFunciones from "../components/CampoConFunciones";
 import type { Campo } from "../types/campo";
 
 // --- Operadores permitidos ---
@@ -297,16 +298,17 @@ const EditorCondicion: React.FC<Props> = ({
             /> Usar editor manual (avanzado)
           </label>
           {modoAvanzado && (
-            <>
-              <textarea
+            <div style={{ marginTop: 10 }}>
+              <CampoConFunciones
+                label="Condición Avanzada"
                 value={textoLibre}
-                onChange={(e) => setTextoLibre(e.target.value)}
+                onChange={setTextoLibre}
+                placeholder="Ej: Entrada.Valor > 100 && Entrada.Estado == 'OK' || Ahora() > '2025-01-01'"
+                multiline={true}
                 rows={4}
-                style={{
-                  width: "100%", marginTop: 5,
-                  borderColor: esCondicionValida(textoLibre) ? "green" : "red",
-                }}
-                placeholder="Ej: Entrada.Valor > 100 && Entrada.Estado == 'OK'"
+                mostrarFunciones={true}
+                categoriaFunciones="todas"
+                validarSintaxis={false}
               />
               <div style={{ marginTop: 10 }}>
                 <strong>Vista previa:</strong>
@@ -318,10 +320,15 @@ const EditorCondicion: React.FC<Props> = ({
                   borderRadius: 4,
                   color: esCondicionValida(textoLibre) ? "green" : "red",
                 }}>
-                  {textoLibre}
+                  {textoLibre || "Escribe tu condición aquí..."}
                 </div>
+                {!esCondicionValida(textoLibre) && textoLibre && (
+                  <div style={{ color: "red", fontSize: "12px", marginTop: 5 }}>
+                    ⚠️ Sintaxis inválida - verifica la condición
+                  </div>
+                )}
               </div>
-            </>
+            </div>
           )}
         </div>
 
