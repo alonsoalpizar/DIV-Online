@@ -39,7 +39,7 @@ func SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Buscar en Servidores
 	var servidores []models.Servidor
 	database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(tipo) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&servidores)
-	
+
 	for _, servidor := range servidores {
 		allResults = append(allResults, SearchResult{
 			ID:          servidor.ID,
@@ -52,7 +52,7 @@ func SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Buscar en Canales
 	var canales []models.Canal
 	database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(codigo) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&canales)
-	
+
 	for _, canal := range canales {
 		allResults = append(allResults, SearchResult{
 			ID:          canal.ID,
@@ -65,7 +65,7 @@ func SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Buscar en Procesos
 	var procesos []models.Proceso
 	database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&procesos)
-	
+
 	for _, proceso := range procesos {
 		description := proceso.Descripcion
 		if description == "" {
@@ -82,7 +82,7 @@ func SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Buscar en Parámetros
 	var parametros []models.Parametro
 	database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&parametros)
-	
+
 	for _, parametro := range parametros {
 		allResults = append(allResults, SearchResult{
 			ID:          parametro.ID,
@@ -95,7 +95,7 @@ func SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Buscar en Tareas Programadas
 	var tareas []models.TareaProgramada
 	database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&tareas)
-	
+
 	for _, tarea := range tareas {
 		status := "Inactivo"
 		if tarea.Activo {
@@ -129,7 +129,7 @@ func SearchByType(w http.ResponseWriter, r *http.Request) {
 	// Obtener parámetros
 	query := r.URL.Query().Get("q")
 	searchType := r.URL.Query().Get("type")
-	
+
 	if query == "" || len(query) < 2 {
 		json.NewEncoder(w).Encode(SearchResponse{Results: []SearchResult{}, Count: 0})
 		return
@@ -142,7 +142,7 @@ func SearchByType(w http.ResponseWriter, r *http.Request) {
 	case "servidor":
 		var servidores []models.Servidor
 		database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(tipo) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&servidores)
-		
+
 		for _, servidor := range servidores {
 			results = append(results, SearchResult{
 				ID:          servidor.ID,
@@ -155,7 +155,7 @@ func SearchByType(w http.ResponseWriter, r *http.Request) {
 	case "canal":
 		var canales []models.Canal
 		database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(codigo) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&canales)
-		
+
 		for _, canal := range canales {
 			results = append(results, SearchResult{
 				ID:          canal.ID,
@@ -168,7 +168,7 @@ func SearchByType(w http.ResponseWriter, r *http.Request) {
 	case "proceso":
 		var procesos []models.Proceso
 		database.DB.Where("LOWER(nombre) LIKE ? OR LOWER(descripcion) LIKE ?", "%"+query+"%", "%"+query+"%").Find(&procesos)
-		
+
 		for _, proceso := range procesos {
 			description := proceso.Descripcion
 			if description == "" {

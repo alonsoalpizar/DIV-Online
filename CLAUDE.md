@@ -17,7 +17,7 @@ The system enables visual creation and execution of data integration workflows w
 ### Frontend (div/frontend)
 ```bash
 cd div/frontend
-npm run dev          # Start development server (Vite)
+npm run dev          # Start development server (Vite) on port 5173
 npm run build        # Build for production (TypeScript + Vite)
 npm run lint         # Run ESLint
 npm run preview      # Preview production build
@@ -29,9 +29,22 @@ npm run preview      # Preview production build
 cd div/backend
 go run main.go       # Start on port 30000
 
-# Execution Engine (BackendMotor)
+# Execution Engine (BackendMotor)  
 cd BackendMotor
 go run cmd/server/main.go  # Start on port 50000
+```
+
+### SystemD Services (Production)
+```bash
+# div-backend.service (Management API)
+sudo systemctl restart div-backend.service
+systemctl status div-backend.service
+journalctl -u div-backend.service -f
+
+# div-backend-motor.service (Execution Engine)
+sudo systemctl restart div-backend-motor.service  
+systemctl status div-backend-motor.service
+journalctl -u div-backend-motor.service -f
 ```
 
 ### Database
@@ -93,3 +106,35 @@ Key models shared between backends:
 
 ### Development Workflow
 The project uses a structured daily development approach documented in `logs-desarrollo/` with conversation-driven development using AI assistance. Each development session is logged and tracked.
+
+## Testing and Quality
+
+### Frontend Testing
+- TypeScript compilation: `npm run build` (includes type checking)
+- Linting: `npm run lint`
+
+### Backend Testing  
+- Go compilation validation: `go build` in respective directories
+- No specific test framework configured - verify functionality through manual testing
+
+## Key Technical Details
+
+### Flow Execution Engine
+The core execution logic is in `BackendMotor/internal/ejecucion/motor.go`:
+- Loads process definitions from PostgreSQL
+- Parses JSON flow structure into executable nodes
+- Supports various connectors (REST, SOAP, PostgreSQL) in `ejecutores/`
+- Includes monitoring via Prometheus metrics
+
+### Frontend State Management
+- Flow state managed via `hooks/useFlujo.ts`
+- ReactFlow integration for visual node editor
+- Flow validation logic in `utils/validarFlujo.ts` (currently disabled)
+- Node editors in `editors/` for each node type configuration
+
+### Database Models
+Shared models between backends include:
+- Flow definitions stored as JSON in `Proceso.flujo` field
+- Channel configurations in `Canal` for external connections
+- Server definitions in `Servidor` for endpoint management
+- Scheduled executions in `TareaProgramada`

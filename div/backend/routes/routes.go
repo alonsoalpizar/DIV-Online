@@ -75,5 +75,9 @@ func SetupRoutes() *mux.Router {
 	router.HandleFunc("/tareas-programadas/{id}/ejecutar", controllers.EjecutarTareaManual).Methods("POST")
 	router.HandleFunc("/tareas-programadas/{id}/ejecuciones", controllers.ObtenerEjecucionesTarea).Methods("GET")
 
+	// Rutas de Cliente de Pruebas Interno
+	router.HandleFunc("/test-cliente/ejecutar", controllers.EjecutarTest).Methods("POST")
+	router.HandleFunc("/test-cliente/parametros", controllers.ObtenerParametrosProceso).Methods("POST")
+
 	return router
 }

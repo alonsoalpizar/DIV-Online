@@ -11,6 +11,7 @@ import AsignarProcesosACanal from './components/AsignarProcesosACanal';
 import WrapperAsignarProcesosACanal from "./pages/WrapperAsignarProcesosACanal";
 import ConfiguracionSistema from './pages/ConfiguracionSistema';
 import TareasProgramadas from './pages/TareasProgramadas';
+import TestClient from './pages/TestClient';
 import './styles/design-system.css';
 import './styles/home.css';
 import './styles/pages.css';
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/canales/:id/asignar-procesos" element={<WrapperAsignarProcesosACanal />} />
         <Route path="/configuracion" element={<ConfiguracionSistema />} />
         <Route path="/tareas-programadas" element={<TareasProgramadas />} />
+        <Route path="/test-client" element={<TestClient />} />
       </Routes>
     </Layout>
   );

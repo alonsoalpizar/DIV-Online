@@ -1,13 +1,13 @@
 package models
 
 import (
-	"time"
 	"gorm.io/datatypes"
+	"time"
 )
 
 type Servidor struct {
 	ID            string            `gorm:"primaryKey" json:"id"`
-	Codigo 		  string 			`json:"codigo"`
+	Codigo        string            `json:"codigo"`
 	Nombre        string            `json:"nombre"`
 	Tipo          string            `json:"tipo"`
 	Host          string            `json:"host"`
@@ -17,6 +17,7 @@ type Servidor struct {
 	FechaCreacion time.Time         `json:"fechaCreacion"`
 	Extras        datatypes.JSONMap `json:"extras"` // mapa en formato JSON
 }
+
 func (Servidor) TableName() string {
 	return "servidores"
 }

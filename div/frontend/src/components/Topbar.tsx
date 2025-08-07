@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaBell, FaSearch, FaUserCircle, FaCog } from 'react-icons/fa';
+import { FaBell, FaSearch, FaUserCircle, FaCog, FaFlask } from 'react-icons/fa';
 import { getApiBase } from '../utils/configuracion';
 import '../styles/globals.css';
 import '../styles/topbar.css';
@@ -9,7 +9,23 @@ const Topbar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showConfigMenu, setShowConfigMenu] = useState(false);
+  const configDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Cerrar menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (configDropdownRef.current && !configDropdownRef.current.contains(event.target as Node)) {
+        setShowConfigMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSearch = async (term: string) => {
     setSearchTerm(term);
@@ -54,6 +70,20 @@ const Topbar = () => {
     setSearchTerm('');
   };
 
+  const handleConfigMenuToggle = () => {
+    setShowConfigMenu(!showConfigMenu);
+  };
+
+  const handleNavigateToTestClient = () => {
+    navigate('/test-client');
+    setShowConfigMenu(false);
+  };
+
+  const handleNavigateToSystemConfig = () => {
+    navigate('/configuracion');
+    setShowConfigMenu(false);
+  };
+
   return (
     <header className="topbar-modern">
       <div className="topbar-content">
@@ -92,9 +122,33 @@ const Topbar = () => {
               <FaBell />
               <span className="notification-badge">3</span>
             </button>
-            <button className="topbar-action" title="Configuración">
-              <FaCog />
-            </button>
+            <div className="topbar-dropdown-container" ref={configDropdownRef}>
+              <button 
+                className="topbar-action" 
+                title="Configuración"
+                onClick={handleConfigMenuToggle}
+              >
+                <FaCog />
+              </button>
+              {showConfigMenu && (
+                <div className="config-dropdown">
+                  <div 
+                    className="config-dropdown-item"
+                    onClick={handleNavigateToTestClient}
+                  >
+                    <FaFlask className="config-icon" />
+                    <span>Cliente de Pruebas</span>
+                  </div>
+                  <div 
+                    className="config-dropdown-item"
+                    onClick={handleNavigateToSystemConfig}
+                  >
+                    <FaCog className="config-icon" />
+                    <span>Configuración Sistema</span>
+                  </div>
+                </div>
+              )}
+            </div>
             <button className="topbar-profile">
               <FaUserCircle />
               <span>Admin</span>
