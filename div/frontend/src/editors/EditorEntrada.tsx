@@ -2,20 +2,12 @@ import React, { useState, useEffect } from 'react';
 import AyudaFuncionTabla from '../components/Callouts/AyudaFuncionTabla';
 import { obtenerFuncionesGlobales, FuncionGlobal } from '../utils/funcionesGlobales';
 import { getApiBase } from '../utils/configuracion';
+import SortableAsignacionesEntradaList from '../components/SortableAsignacionesEntradaList';
+import { CampoEntrada } from '../components/SortableAsignacionEntrada';
 
 
 // --- Tipos de datos ---
-interface Campo {
-  nombre: string;
-  tipo: string;
-  asignacion?: {
-    tipo: '' | 'literal' | 'funcion' | 'tabla';
-    valor: string;
-    tabla?: string;
-    campoResultado?: string;
-    valorEsCampo?: boolean;
-  };
-}
+// Nota: Usando CampoEntrada importado para consistencia con drag & drop
 
 interface Tabla {
   nombre: string;
@@ -24,8 +16,8 @@ interface Tabla {
 
 interface Props {
   label: string;
-  campos: Campo[];
-  onGuardar: (nuevoLabel: string, nuevosCampos: Campo[], parametrosSalida: Campo[]) => void;
+  campos: CampoEntrada[];
+  onGuardar: (nuevoLabel: string, nuevosCampos: CampoEntrada[], parametrosSalida: CampoEntrada[]) => void;
   onCancelar: () => void;
 }
 
@@ -33,7 +25,12 @@ interface Props {
 const EditorEntrada: React.FC<Props> = ({ label, campos, onGuardar, onCancelar }) => {
   // --- Estados locales ---
   const [nuevoLabel, setNuevoLabel] = useState(label);
-  const [camposLocal, setCamposLocal] = useState<Campo[]>(campos || []);
+  const [camposLocal, setCamposLocal] = useState<CampoEntrada[]>(
+    campos?.map(campo => ({
+      ...campo,
+      orden: campo.orden ?? (campos.indexOf(campo) + 1)
+    })) || []
+  );
   const [tablas, setTablas] = useState<Tabla[]>([]);
   const [funcionesSistema, setFuncionesSistema] = useState<FuncionGlobal[]>([]);
 
@@ -49,53 +46,20 @@ const EditorEntrada: React.FC<Props> = ({ label, campos, onGuardar, onCancelar }
     });
   }, []);
 
-  // --- Actualiza un campo específico ---
-  const actualizarCampo = (index: number, cambios: Partial<Campo>) => {
-    const nuevos = [...camposLocal];
-    nuevos[index] = { ...nuevos[index], ...cambios };
-    setCamposLocal(nuevos);
-  };
-
-  // --- Actualiza la asignación de un campo específico ---
-const actualizarAsignacion = (index: number, cambios: Partial<Campo['asignacion']>) => {
-  const nuevos = [...camposLocal];
-  const prev = nuevos[index].asignacion || { tipo: '', valor: '' };
-
-  const nuevoTipo = cambios?.tipo || prev.tipo;
-
-  let actualizada: Campo['asignacion'] = { ...prev, ...cambios };
-
-  if (nuevoTipo === "tabla" && cambios) {
-    if ("valor" in cambios && cambios.valor !== undefined) {
-      (actualizada as any).clave = cambios.valor;
-
-    }
-    if ("campoResultado" in cambios && cambios.campoResultado !== undefined) {
-      (actualizada as any).campo = cambios.campoResultado;
-    }
-  }
-
-  nuevos[index].asignacion = actualizada;
-  setCamposLocal(nuevos);
-};
-
-
-  // --- Obtiene los campos de una tabla seleccionada ---
-  const obtenerCamposDeTabla = (nombreTabla: string | undefined) => {
-    if (!nombreTabla) return [];
-    const tabla = tablas.find(t => t.nombre === nombreTabla);
-    return tabla?.campos || [];
-  };
-
   // --- Agrega un nuevo campo ---
   const agregarCampo = () => {
-    setCamposLocal([...camposLocal, { nombre: '', tipo: 'string' }]);
+    const nuevoCampo: CampoEntrada = {
+      nombre: '',
+      tipo: 'string',
+      orden: camposLocal.length + 1
+    };
+    setCamposLocal([...camposLocal, nuevoCampo]);
   };
 
-  // --- Elimina un campo por índice ---
-  const eliminarCampo = (index: number) => {
-    setCamposLocal(camposLocal.filter((_, i) => i !== index));
-  };
+  // Nota: Las funciones de actualización ahora están manejadas por los componentes sortables
+
+
+  // Nota: Las funciones de manipulación de campos están ahora en los componentes sortables
 
   // --- Guarda los cambios, validando duplicados y campos incompletos ---
   const guardar = () => {
@@ -143,177 +107,85 @@ const actualizarAsignacion = (index: number, cambios: Partial<Campo['asignacion'
       <div
         style={{
           background: 'white',
-          padding: 20,
+          padding: 16,
           borderRadius: 8,
           width: '800px',
-          maxHeight: '90vh',
+          maxHeight: '95vh',
           overflowY: 'auto',
           boxShadow: '0 0 10px rgba(0,0,0,0.4)'
         }}
       >
-        <h3>Editar Nodo de Entrada</h3>
-        <label>Nombre del nodo:</label>
-        <input
-          value={nuevoLabel}
-          onChange={e => setNuevoLabel(e.target.value)}
-          style={{ width: '100%', marginBottom: '10px' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+          <h3 style={{ margin: 0, flex: 1 }}>📝 Entrada</h3>
+          <input
+            value={nuevoLabel}
+            onChange={e => setNuevoLabel(e.target.value)}
+            placeholder="Nombre del nodo"
+            style={{ 
+              flex: 2,
+              padding: '6px 8px', 
+              border: '1px solid #ced4da',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+          />
+        </div>
+        <div style={{ marginBottom: '8px' }}>
+          <button 
+            onClick={agregarCampo}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '13px'
+            }}
+          >
+            ➕ Agregar Campo
+          </button>
+        </div>
+        
+        <SortableAsignacionesEntradaList 
+          campos={camposLocal}
+          setCampos={setCamposLocal}
+          tablas={tablas}
+          funcionesSistema={funcionesSistema}
         />
 
-        <h4>Campos esperados:</h4>
-        {camposLocal.map((campo, i) => {
-          const camposTabla = obtenerCamposDeTabla(campo.asignacion?.tabla);
-
-          return (
-            <div
-              key={i}
-              style={{
-                marginBottom: '10px',
-                padding: '10px',
-                border: '1px solid #eee',
-                borderRadius: 4
-              }}
-            >
-              {/* Nombre y tipo del campo */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
-                <input
-                  value={campo.nombre}
-                  onChange={e => actualizarCampo(i, { nombre: e.target.value })}
-                  placeholder="Nombre del campo"
-                  style={{ flex: 1 }}
-                />
-                <select
-                  value={campo.tipo}
-                  onChange={e => actualizarCampo(i, { tipo: e.target.value })}
-                >
-                  <option value="string">string</option>
-                  <option value="int">int</option>
-                  <option value="float">float</option>
-                  <option value="boolean">boolean</option>
-                  <option value="date">date</option>
-                  <option value="datetime">datetime</option>
-                </select>
-                <button onClick={() => eliminarCampo(i)}>❌</button>
-              </div>
-
-              {/* Asignación del campo */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <select
-                  value={campo.asignacion?.tipo || ''}
-                  onChange={e =>
-                    actualizarAsignacion(i, {
-                      tipo: e.target.value as any,
-                      valor: '',
-                      campoResultado: ''
-                    })
-                  }
-                >
-                  <option value="">🚫 Sin asignar</option>
-                  <option value="literal">✍️ Literal</option>
-                  <option value="funcion">⚙️ Sistema</option>
-                  <option value="tabla">📊 Tabla</option>
-                </select>
-
-                {/* Asignación tipo literal */}
-                {campo.asignacion?.tipo === 'literal' && (
-                  <input
-                    value={campo.asignacion?.valor || ''}
-                    placeholder="Valor"
-                    onChange={e => actualizarAsignacion(i, { valor: e.target.value })}
-                    style={{ flex: 1 }}
-                  />
-                )}
-
-                {/* Asignación tipo sistema */}
-                {campo.asignacion?.tipo === 'funcion' && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-    <input
-      placeholder="Ej: Ahora()"
-      value={campo.asignacion?.valor || ''}
-      onChange={e => actualizarAsignacion(i, { valor: e.target.value })}
-    />
-    <select
-      onChange={e => {
-        const func = funcionesSistema.find(f => f.nombre === e.target.value);
-        if (func) {
-          actualizarAsignacion(i, { valor: func.ejemplo || `${func.nombre}()` });
-        }
-      }}
-      defaultValue=""
-      style={{
-        padding: '4px',
-        borderRadius: '4px',
-        border: '1px solid #ccc',
-        fontSize: '0.9em'
-      }}
-    >
-      <option value="">🧠 Elegir función de sistema...</option>
-      {funcionesSistema.map((f, idx) => (
-        <option key={f.nombre + '-' + idx} value={f.nombre}>
-          {f.nombre}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-
-
-                {/* Asignación tipo tabla */}
-                {campo.asignacion?.tipo === 'tabla' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                    <select
-                      value={campo.asignacion?.tabla || ''}
-                      onChange={e =>
-                        actualizarAsignacion(i, { tabla: e.target.value, campoResultado: '' })
-                      }
-                    >
-                      <option value="">-- Seleccione tabla --</option>
-                      {tablas.map((t, idx) => (
-                        <option key={t.nombre + '-' + idx} value={t.nombre}>
-                          {t.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      placeholder='Clave (ej: "00" o Cliente.ID)'
-                      value={campo.asignacion?.valor || ''}
-                      onChange={e => actualizarAsignacion(i, { valor: e.target.value })}
-                    />
-                    <select
-                      value={campo.asignacion?.campoResultado || ''}
-                      onChange={e => actualizarAsignacion(i, { campoResultado: e.target.value })}
-                    >
-                      <option value="">-- Seleccione campo resultado --</option>
-                      {camposTabla.map((c, idx) => (
-                        <option key={c.nombre + '-' + idx} value={c.nombre}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    <div style={{ fontSize: '0.85em', color: '#555' }}>
-                      Vista previa:{' '}
-                      <code>
-                        Tabla("{campo.asignacion?.tabla}", {campo.asignacion?.valor})
-                        .{campo.asignacion?.campoResultado}
-                      </code>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Botón para agregar campo */}
-        <button onClick={agregarCampo}>➕ Agregar campo</button>
-
         {/* Botones de acción */}
-        <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between' }}>
-          <button onClick={guardar}>💾 Guardar</button>
-          <button onClick={onCancelar}>Cancelar</button>
+        <div style={{ marginTop: 15, display: 'flex', justifyContent: 'space-between' }}>
+          <button 
+            onClick={guardar}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            💾 Guardar
+          </button>
+          <button 
+            onClick={onCancelar}
+            style={{
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Cancelar
+          </button>
         </div>
 
-        {/* Ayuda contextual */}
-        <div style={{ marginTop: 30 }}>
+        {/* Ayuda contextual compacta */}
+        <div style={{ marginTop: 20 }}>
           <AyudaFuncionTabla />
         </div>
       </div>

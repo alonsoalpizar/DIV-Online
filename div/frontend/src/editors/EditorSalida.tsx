@@ -2,22 +2,20 @@
 
 import { useState } from 'react';
 import React, { JSX } from 'react';
+import SortableCamposSalidaList from '../components/SortableCamposSalidaList';
+import { CampoSalida } from '../components/SortableCampoSalida';
 
 // --- Tipos e interfaces ---
-interface Campo {
-  nombre: string;
-  tipo: string;
-  subcampos?: Campo[];
-}
+// Nota: Usando CampoSalida importado para consistencia
 
 interface Props {
   label: string;
-  campos: Campo[];
+  campos: CampoSalida[];
   formatoSalida: string;
   tagPadre: string;
   onGuardar: (
     label: string,
-    campos: Campo[],
+    campos: CampoSalida[],
     formatoSalida: string,
     tagPadre: string
   ) => void;
@@ -28,7 +26,7 @@ interface Props {
 const tiposSimples = ['string', 'int', 'bool', 'date', 'float', 'json'];
 
 // --- Control de duplicados en el nivel raíz ---
-const tieneDuplicadosNivel0 = (campos: Campo[]): boolean => {
+const tieneDuplicadosNivel0 = (campos: CampoSalida[]): boolean => {
   const nombres = campos.map(c => c.nombre.trim());
   return nombres.some((n, i) => n && nombres.indexOf(n) !== i);
 };
@@ -44,27 +42,37 @@ const EditorSalida: React.FC<Props> = ({
 }) => {
   // --- Estados principales ---
   const [nuevoLabel, setNuevoLabel] = useState(label);
-  const [camposEdit, setCamposEdit] = useState<Campo[]>(campos);
+  const [camposEdit, setCamposEdit] = useState<CampoSalida[]>(
+    campos?.map(campo => ({
+      ...campo,
+      orden: campo.orden ?? (campos.indexOf(campo) + 1)
+    })) || []
+  );
   const [formato, setFormato] = useState(formatoSalida || 'json');
   const [tagPadre, setTagPadre] = useState(tagPadreInit || '');
 
   // --- Estados para subcampos y jerarquía ---
-  const [bufferStack, setBufferStack] = useState<Campo[][]>([]);
-  const [contextStack, setContextStack] = useState<{ lista: Campo[]; index: number; nivel: number }[]>([]);
+  const [bufferStack, setBufferStack] = useState<CampoSalida[][]>([]);
+  const [contextStack, setContextStack] = useState<{ lista: CampoSalida[]; index: number; nivel: number }[]>([]);
   const [nivelesConfirmados, setNivelesConfirmados] = useState<number[]>([0]);
   const [modoLectura, setModoLectura] = useState(false);
   const [campoJerarquia, setCampoJerarquia] = useState<string | null>(null);
-  const [jerarquiaVisible, setJerarquiaVisible] = useState<Campo[] | null>(null);
+  const [jerarquiaVisible, setJerarquiaVisible] = useState<CampoSalida[] | null>(null);
 
   // --- Agregar campo a la lista ---
-  const agregarCampo = (lista: Campo[], setLista: (v: Campo[]) => void) => {
+  const agregarCampo = (lista: CampoSalida[], setLista: (v: CampoSalida[]) => void) => {
     const nombres = lista.map(c => c.nombre.trim());
     if (nombres.includes('')) return alert('Complete todos los nombres antes de agregar uno nuevo.');
-    setLista([...lista, { nombre: '', tipo: 'string' }]);
+    const nuevoCampo: CampoSalida = {
+      nombre: '',
+      tipo: 'string',
+      orden: lista.length + 1
+    };
+    setLista([...lista, nuevoCampo]);
   };
 
   // --- Renderiza campos y subcampos recursivamente ---
-  const renderCampos = (campos: Campo[], setCampos: (v: Campo[]) => void, nivel: number): JSX.Element[] => {
+  const renderCampos = (campos: CampoSalida[], setCampos: (v: CampoSalida[]) => void, nivel: number): JSX.Element[] => {
     return campos.map((campo, i) => {
       const puedeAgregarSubnivel = nivelesConfirmados.includes(nivel);
       const mostrarTipo = puedeAgregarSubnivel || campo.subcampos;
@@ -153,17 +161,18 @@ const EditorSalida: React.FC<Props> = ({
   };
 
   // --- Renderiza la jerarquía de campos recursivamente ---
-  const renderJerarquia = (campos: Campo[], nivel = 0): JSX.Element[] => {
+  const renderJerarquia = (campos: CampoSalida[], nivel = 0): JSX.Element[] => {
     return campos.map((campo, i) => (
       <div key={i} style={{ marginLeft: nivel * 20 }}>
         └─ {campo.nombre} ({campo.tipo})
+        {campo.orden && <span style={{ color: '#28a745', fontSize: '12px' }}> [#{campo.orden}]</span>}
         {campo.subcampos && renderJerarquia(campo.subcampos, nivel + 1)}
       </div>
     ));
   };
 
   // --- Validación recursiva de campos vacíos ---
-  const tieneVacios = (lista: Campo[]): boolean =>
+  const tieneVacios = (lista: CampoSalida[]): boolean =>
     lista.some(
       c =>
         !c.nombre ||
@@ -219,8 +228,40 @@ const EditorSalida: React.FC<Props> = ({
           />
 
           <h4>📤 Campos de Salida</h4>
-          <button onClick={() => agregarCampo(camposEdit, setCamposEdit)}>➕ Agregar Campo</button>
-          {renderCampos(camposEdit, setCamposEdit, 0)}
+          <div style={{ marginBottom: '10px' }}>
+            <button 
+              onClick={() => agregarCampo(camposEdit, setCamposEdit)}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '10px'
+              }}
+            >
+              ➕ Agregar Campo
+            </button>
+            <span style={{ fontSize: '12px', color: '#666' }}>
+              🔄 Arrastra los campos para cambiar su orden en la respuesta
+            </span>
+          </div>
+          <SortableCamposSalidaList 
+            campos={camposEdit}
+            setCampos={setCamposEdit}
+            onEditarSubcampos={(index) => {
+              const campo = camposEdit[index];
+              setBufferStack([campo.subcampos || [], ...bufferStack]);
+              setContextStack([{ lista: camposEdit, index, nivel: 0 }, ...contextStack]);
+              setModoLectura(true);
+            }}
+            onVerJerarquia={(index) => {
+              const campo = camposEdit[index];
+              setJerarquiaVisible([campo]);
+              setCampoJerarquia(campo.nombre);
+            }}
+          />
 
           {/* Botones de acción */}
           <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>

@@ -18,6 +18,8 @@ type AsignacionSalida struct {
 	Clave           string `json:"clave,omitempty"`
 	Campo           string `json:"campo,omitempty"`
 	EsClaveVariable bool   `json:"esClaveVariable,omitempty"`
+	// Campo para controlar orden en la respuesta final
+	Orden           *int   `json:"orden,omitempty"`
 }
 
 // ejecutarNodoSalida realiza las asignaciones finales para construir la respuesta del flujo
@@ -40,9 +42,33 @@ func ejecutarNodoSalida(
 	respuestaFinal := make(map[string]interface{})
 	asignacionesAplicadas := make(map[string]interface{})
 
-	// 🔄 Paso 3: Recorrer todas las asignaciones
+	// 🔄 Paso 3: Recopilar y ordenar todas las asignaciones
+	var todasLasAsignaciones []AsignacionSalida
 	for _, asigns := range asignaciones {
-		for _, asign := range asigns {
+		todasLasAsignaciones = append(todasLasAsignaciones, asigns...)
+	}
+
+	// Ordenar por campo orden (si existe)
+	for i := 0; i < len(todasLasAsignaciones); i++ {
+		for j := i + 1; j < len(todasLasAsignaciones); j++ {
+			ordenI := 999999 // valor alto por defecto
+			ordenJ := 999999
+
+			if todasLasAsignaciones[i].Orden != nil {
+				ordenI = *todasLasAsignaciones[i].Orden
+			}
+			if todasLasAsignaciones[j].Orden != nil {
+				ordenJ = *todasLasAsignaciones[j].Orden
+			}
+
+			if ordenI > ordenJ {
+				todasLasAsignaciones[i], todasLasAsignaciones[j] = todasLasAsignaciones[j], todasLasAsignaciones[i]
+			}
+		}
+	}
+
+	// 🔄 Paso 4: Ejecutar asignaciones en orden
+	for _, asign := range todasLasAsignaciones {
 
 			// 🔁 Tipo: campo → copiar desde variable existente en resultado
 			if asign.Tipo == "campo" {
@@ -82,7 +108,6 @@ func ejecutarNodoSalida(
 					fmt.Printf("✅ [nodo_salida.go] Tabla consultada %s[%s].%s → %v\n", asign.Tabla, asign.Clave, asign.Campo, valor)
 				}
 			}
-		}
 	}
 
 	// ✅ Paso final: retornar la respuesta y las asignaciones realizadas

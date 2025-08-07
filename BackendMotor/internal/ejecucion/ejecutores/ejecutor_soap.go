@@ -102,8 +102,19 @@ func EjecutarSOAP(nodo estructuras.NodoGenerico, resultado map[string]interface{
 	fmt.Printf("   Namespace: '%s'\n", namespace)
 	fmt.Printf("   Timeout: '%s'\n", timeout)
 
-	// 🧩 Construir SOAP Envelope
-	soapXML, err := construirSOAPEnvelope(objeto, namespace, resultado)
+	// 🎆 Filtrar solo parámetros que deben enviarse al servidor
+	parametrosFiltrados := getParametrosFiltradosYOrdenadosSOAP(nodo)
+	
+	// Crear payload solo con parámetros filtrados y ordenados
+	payloadParaServidor := make(map[string]interface{})
+	for _, param := range parametrosFiltrados {
+		if val, existe := resultado[param.Nombre]; existe {
+			payloadParaServidor[param.Nombre] = val
+		}
+	}
+
+	// 🧩 Construir SOAP Envelope con parámetros filtrados
+	soapXML, err := construirSOAPEnvelope(objeto, namespace, payloadParaServidor)
 	if err != nil {
 		return "", fmt.Errorf("error construyendo SOAP envelope: %w", err)
 	}
@@ -567,4 +578,61 @@ func ExtraerValoresDesdeXMLSOAP(xmlString string, campos []estructuras.Campo, re
 			}
 		}
 	}
+}
+
+// Estructura de parámetro para filtrado SOAP
+type ParametroFiltradoSOAP struct {
+	Nombre          string `json:"nombre"`
+	Tipo            string `json:"tipo"`
+	EnviarAServidor *bool  `json:"enviarAServidor,omitempty"`
+	Orden           *int   `json:"orden,omitempty"`
+}
+
+// getParametrosFiltradosYOrdenadosSOAP extrae y filtra parámetros del nodo para SOAP
+func getParametrosFiltradosYOrdenadosSOAP(n estructuras.NodoGenerico) []ParametroFiltradoSOAP {
+	var parametros []ParametroFiltradoSOAP
+	
+	// Extraer parámetros de entrada del nodo
+	if parametrosRaw, exists := n.Data["parametrosEntrada"]; exists {
+		if parametrosBytes, err := json.Marshal(parametrosRaw); err == nil {
+			var parametrosCompletos []ParametroFiltradoSOAP
+			if err := json.Unmarshal(parametrosBytes, &parametrosCompletos); err == nil {
+				parametros = parametrosCompletos
+			}
+		}
+	}
+
+	// Filtrar solo los que deben enviarse al servidor
+	var filtrados []ParametroFiltradoSOAP
+	for _, param := range parametros {
+		enviar := true // Por defecto true para retrocompatibilidad
+		if param.EnviarAServidor != nil {
+			enviar = *param.EnviarAServidor
+		}
+		
+		if enviar {
+			filtrados = append(filtrados, param)
+		}
+	}
+
+	// Ordenar por campo orden - CRÍTICO para SOAP que requiere orden específico
+	for i := 0; i < len(filtrados); i++ {
+		for j := i + 1; j < len(filtrados); j++ {
+			ordenI := 999999 // valor alto por defecto
+			ordenJ := 999999
+
+			if filtrados[i].Orden != nil {
+				ordenI = *filtrados[i].Orden
+			}
+			if filtrados[j].Orden != nil {
+				ordenJ = *filtrados[j].Orden
+			}
+
+			if ordenI > ordenJ {
+				filtrados[i], filtrados[j] = filtrados[j], filtrados[i]
+			}
+		}
+	}
+
+	return filtrados
 }

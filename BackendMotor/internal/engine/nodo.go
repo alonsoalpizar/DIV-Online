@@ -10,6 +10,9 @@ type NodoProceso struct {
 }
 
 type Parametro struct {
-	Nombre string
-	Tipo   string
+	Nombre          string                 `json:"nombre"`
+	Tipo            string                 `json:"tipo"`
+	EnviarAServidor *bool                  `json:"enviarAServidor,omitempty"` // Puntero para manejar valor null (retrocompatibilidad)
+	Orden           *int                   `json:"orden,omitempty"`
+	Subcampos       []Parametro            `json:"subcampos,omitempty"`
 }

@@ -17,13 +17,23 @@ import (
 
 func EjecutarREST(nodo estructuras.NodoGenerico, resultado map[string]interface{}, servidor models.Servidor) (string, error) {
 	// 🧪 Preparar extras del servidor (headers, etc.)
-	// 🧪 Preparar extras del servidor (headers, etc.)
 	extraHeaders := servidor.Extras
 
 	// 🔍 Extraer configuración del nodo
 	endpoint, ok := nodo.Data["objeto"].(string)
 	if !ok || endpoint == "" {
 		return "", errors.New("endpoint no definido en el nodo")
+	}
+
+	// 🎆 Filtrar solo parámetros que deben enviarse al servidor
+	parametrosFiltrados := getParametrosFiltradosYOrdenadosREST(nodo)
+	
+	// Crear payload solo con parámetros filtrados
+	payloadParaServidor := make(map[string]interface{})
+	for _, param := range parametrosFiltrados {
+		if val, existe := resultado[param.Nombre]; existe {
+			payloadParaServidor[param.Nombre] = val
+		}
 	}
 
 	metodo := strings.ToUpper(fmt.Sprint(nodo.Data["metodoHttp"]))
@@ -40,14 +50,28 @@ func EjecutarREST(nodo estructuras.NodoGenerico, resultado map[string]interface{
 	// 🌐 Armar URL completa
 	url := strings.TrimRight(servidor.Host, "/") + "/" + strings.TrimLeft(endpoint, "/")
 
-	// 🧩 Preparar body (solo si no es GET)
+	// 🧩 Preparar body (solo si no es GET) - usar payload filtrado
 	var body io.Reader
 	if metodo != "GET" {
-		bodyBytes, err := json.Marshal(resultado)
+		// Usar solo los parámetros filtrados para el body
+		bodyBytes, err := json.Marshal(payloadParaServidor)
 		if err != nil {
-			return "", fmt.Errorf("error serializando parámetros de entrada: %w", err)
+			return "", fmt.Errorf("error serializando parámetros filtrados: %w", err)
 		}
 		body = bytes.NewReader(bodyBytes)
+	} else {
+		// Para GET, agregar parámetros filtrados como query params
+		if len(payloadParaServidor) > 0 {
+			params := make([]string, 0, len(payloadParaServidor))
+			for k, v := range payloadParaServidor {
+				params = append(params, fmt.Sprintf("%s=%v", k, v))
+			}
+			if strings.Contains(url, "?") {
+				url += "&" + strings.Join(params, "&")
+			} else {
+				url += "?" + strings.Join(params, "&")
+			}
+		}
 	}
 
 	// 🧠 Preparar request
@@ -123,4 +147,61 @@ func EjecutarREST(nodo estructuras.NodoGenerico, resultado map[string]interface{
 	}
 
 	return fullOutput, nil
+}
+
+// Estructura de parámetro para filtrado (igual que en PostgreSQL)
+type ParametroFiltradoREST struct {
+	Nombre          string `json:"nombre"`
+	Tipo            string `json:"tipo"`
+	EnviarAServidor *bool  `json:"enviarAServidor,omitempty"`
+	Orden           *int   `json:"orden,omitempty"`
+}
+
+// getParametrosFiltradosYOrdenadosREST extrae y filtra parámetros del nodo para REST
+func getParametrosFiltradosYOrdenadosREST(n estructuras.NodoGenerico) []ParametroFiltradoREST {
+	var parametros []ParametroFiltradoREST
+	
+	// Extraer parámetros de entrada del nodo
+	if parametrosRaw, exists := n.Data["parametrosEntrada"]; exists {
+		if parametrosBytes, err := json.Marshal(parametrosRaw); err == nil {
+			var parametrosCompletos []ParametroFiltradoREST
+			if err := json.Unmarshal(parametrosBytes, &parametrosCompletos); err == nil {
+				parametros = parametrosCompletos
+			}
+		}
+	}
+
+	// Filtrar solo los que deben enviarse al servidor
+	var filtrados []ParametroFiltradoREST
+	for _, param := range parametros {
+		enviar := true // Por defecto true para retrocompatibilidad
+		if param.EnviarAServidor != nil {
+			enviar = *param.EnviarAServidor
+		}
+		
+		if enviar {
+			filtrados = append(filtrados, param)
+		}
+	}
+
+	// Ordenar por campo orden
+	for i := 0; i < len(filtrados); i++ {
+		for j := i + 1; j < len(filtrados); j++ {
+			ordenI := 999999 // valor alto por defecto
+			ordenJ := 999999
+
+			if filtrados[i].Orden != nil {
+				ordenI = *filtrados[i].Orden
+			}
+			if filtrados[j].Orden != nil {
+				ordenJ = *filtrados[j].Orden
+			}
+
+			if ordenI > ordenJ {
+				filtrados[i], filtrados[j] = filtrados[j], filtrados[i]
+			}
+		}
+	}
+
+	return filtrados
 }

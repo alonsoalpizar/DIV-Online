@@ -18,18 +18,21 @@ import (
 
 // 📦 Representación estructurada del nodo tipo "proceso"
 type NodoProceso struct {
-	Label             string `json:"label"`
-	ServidorID        string `json:"servidorId"`
-	TipoObjeto        string `json:"tipoObjeto"` // plpgsql_function, plpgsql_procedure, etc.
-	Objeto            string `json:"objeto"`     // nombre real del SP o función
-	ParametrosEntrada []struct {
-		Nombre string `json:"nombre"`
-		Tipo   string `json:"tipo"`
-	} `json:"parametrosEntrada"`
-	ParametrosSalida []struct {
-		Nombre string `json:"nombre"`
-		Tipo   string `json:"tipo"`
-	} `json:"parametrosSalida"`
+	Label             string      `json:"label"`
+	ServidorID        string      `json:"servidorId"`
+	TipoObjeto        string      `json:"tipoObjeto"` // plpgsql_function, plpgsql_procedure, etc.
+	Objeto            string      `json:"objeto"`     // nombre real del SP o función
+	ParametrosEntrada []Parametro `json:"parametrosEntrada"`
+	ParametrosSalida  []Parametro `json:"parametrosSalida"`
+}
+
+// Parametro con soporte para filtrado y ordenamiento
+type Parametro struct {
+	Nombre          string      `json:"nombre"`
+	Tipo            string      `json:"tipo"`
+	EnviarAServidor *bool       `json:"enviarAServidor,omitempty"` // Puntero para manejar valor null
+	Orden           *int        `json:"orden,omitempty"`
+	Subcampos       []Parametro `json:"subcampos,omitempty"`
 }
 
 // 🧠 Función principal para ejecutar un nodo tipo "proceso"
@@ -187,6 +190,46 @@ type AsignacionProceso struct {
 	Clave           string `json:"clave,omitempty"`
 	Campo           string `json:"campo,omitempty"`
 	EsClaveVariable bool   `json:"esClaveVariable,omitempty"`
+}
+
+// getParametrosParaServidor filtra y ordena parámetros según enviarAServidor y orden
+func getParametrosParaServidor(parametros []Parametro) []Parametro {
+	var resultado []Parametro
+
+	// Filtrar solo parámetros que deben enviarse al servidor
+	for _, param := range parametros {
+		// Si no existe el campo enviarAServidor, asumir true (retrocompatibilidad)
+		enviar := true
+		if param.EnviarAServidor != nil {
+			enviar = *param.EnviarAServidor
+		}
+
+		if enviar {
+			resultado = append(resultado, param)
+		}
+	}
+
+	// Ordenar por campo orden (si existe), usar índice como fallback
+	for i := 0; i < len(resultado); i++ {
+		for j := i + 1; j < len(resultado); j++ {
+			ordenI := 999999 // valor alto por defecto
+			ordenJ := 999999
+
+			if resultado[i].Orden != nil {
+				ordenI = *resultado[i].Orden
+			}
+			if resultado[j].Orden != nil {
+				ordenJ = *resultado[j].Orden
+			}
+
+			// Si el orden es igual o no definido, usar el orden original
+			if ordenI > ordenJ || (ordenI == ordenJ && ordenI == 999999) {
+				resultado[i], resultado[j] = resultado[j], resultado[i]
+			}
+		}
+	}
+
+	return resultado
 }
 
 // procesarAsignacionesParametros procesa las asignaciones de parámetros antes de ejecutar el SP

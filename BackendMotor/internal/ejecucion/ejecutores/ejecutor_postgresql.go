@@ -99,13 +99,80 @@ func EjecutarPostgreSQL(n estructuras.NodoGenerico, resultado map[string]interfa
 		return "", fmt.Errorf("objeto o tipoObjeto no definidos en el nodo")
 	}
 
+	// 🎆 Filtrar solo parámetros que deben enviarse al servidor
+	parametrosFiltrados := getParametrosFiltradosYOrdenados(n)
+	
+	// Crear mapa de valores solo con parámetros filtrados
+	parametrosParaServidor := make(map[string]interface{})
+	for _, param := range parametrosFiltrados {
+		if val, existe := resultado[param.Nombre]; existe {
+			parametrosParaServidor[param.Nombre] = val
+		}
+	}
+
 	switch strings.ToLower(tipo) {
 	case "funcion", "función", "plpgsql_function":
-		return ejecutor.EjecutarFuncion(objeto, resultado)
+		return ejecutor.EjecutarFuncion(objeto, parametrosParaServidor)
 	case "procedimiento", "plpgsql_procedure":
-		return ejecutor.EjecutarProcedimiento(objeto, resultado)
+		return ejecutor.EjecutarProcedimiento(objeto, parametrosParaServidor)
 	default:
 		return "", fmt.Errorf("tipo de objeto no soportado para PostgreSQL: %s", tipo)
 	}
+}
 
+// Estructura de parámetro para filtrado
+type ParametroFiltrado struct {
+	Nombre          string `json:"nombre"`
+	Tipo            string `json:"tipo"`
+	EnviarAServidor *bool  `json:"enviarAServidor,omitempty"`
+	Orden           *int   `json:"orden,omitempty"`
+}
+
+// getParametrosFiltradosYOrdenados extrae y filtra parámetros del nodo
+func getParametrosFiltradosYOrdenados(n estructuras.NodoGenerico) []ParametroFiltrado {
+	var parametros []ParametroFiltrado
+	
+	// Extraer parámetros de entrada del nodo
+	if parametrosRaw, exists := n.Data["parametrosEntrada"]; exists {
+		if parametrosBytes, err := json.Marshal(parametrosRaw); err == nil {
+			var parametrosCompletos []ParametroFiltrado
+			if err := json.Unmarshal(parametrosBytes, &parametrosCompletos); err == nil {
+				parametros = parametrosCompletos
+			}
+		}
+	}
+
+	// Filtrar solo los que deben enviarse al servidor
+	var filtrados []ParametroFiltrado
+	for _, param := range parametros {
+		enviar := true // Por defecto true para retrocompatibilidad
+		if param.EnviarAServidor != nil {
+			enviar = *param.EnviarAServidor
+		}
+		
+		if enviar {
+			filtrados = append(filtrados, param)
+		}
+	}
+
+	// Ordenar por campo orden
+	for i := 0; i < len(filtrados); i++ {
+		for j := i + 1; j < len(filtrados); j++ {
+			ordenI := 999999 // valor alto por defecto
+			ordenJ := 999999
+
+			if filtrados[i].Orden != nil {
+				ordenI = *filtrados[i].Orden
+			}
+			if filtrados[j].Orden != nil {
+				ordenJ = *filtrados[j].Orden
+			}
+
+			if ordenI > ordenJ {
+				filtrados[i], filtrados[j] = filtrados[j], filtrados[i]
+			}
+		}
+	}
+
+	return filtrados
 }

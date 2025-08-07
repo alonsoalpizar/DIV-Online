@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { getApiBase } from '../utils/configuracion';
 import { Servidor } from '../types/servidor';
-import SortableCampoList from './SortableCampoList';
+import SortableParametrosList from '../components/SortableParametrosList';
+import { Parametro } from '../components/SortableParametroItem';
 
 
 
@@ -15,6 +16,8 @@ interface Campo {
   nombre: string;
   tipo: string;
   subcampos?: Campo[];
+  enviarAServidor?: boolean;
+  orden?: number;
 }
 
 interface Props {
@@ -24,8 +27,8 @@ interface Props {
   objeto: string;
   nodoId: string;
   edges: any[]; // Edge[] si lo necesitas tipar mejor
-  parametrosEntrada: Campo[];
-  parametrosSalida: Campo[];
+  parametrosEntrada: Parametro[];
+  parametrosSalida: Parametro[];
   parametrosError: Campo[];
   tagPadre?: string;
   fullOutput?: string;
@@ -36,9 +39,9 @@ onGuardar: (
   servidorId: string,
   tipoObjeto: string,
   objeto: string,
-  parametrosEntrada: Campo[],
-  parametrosSalida: Campo[],
-  parametrosError: Campo[],
+  parametrosEntrada: Parametro[],
+  parametrosSalida: Parametro[],
+  parametrosError: Parametro[],
   metodoHttp: string,
   tagPadre: string,
   parsearFullOutput: boolean,
@@ -72,18 +75,24 @@ const EditorProceso: React.FC<Props> = ({
   const [nuevoServidor, setNuevoServidor] = useState(servidorId);
   const [nuevoTipoObjeto, setNuevoTipoObjeto] = useState(tipoObjeto);
   const [nuevoObjeto, setNuevoObjeto] = useState(objeto);
-  const [entrada, setEntrada] = useState<Campo[]>(parametrosEntrada || []);
-  const [salida, setSalida] = useState<Campo[]>([]);
+  const [entrada, setEntrada] = useState<Parametro[]>(
+    parametrosEntrada?.map(param => ({
+      ...param,
+      enviarAServidor: param.enviarAServidor ?? true,
+      orden: param.orden ?? (parametrosEntrada.indexOf(param) + 1)
+    })) || []
+  );
+  const [salida, setSalida] = useState<Parametro[]>([]);
   const [servidores, setServidores] = useState<any[]>([]);
   const [tiposDisponibles, setTiposDisponibles] = useState<string[]>([]);
   const [metodoHttp, setMetodoHttp] = useState('GET');
-  const [bufferStack, setBufferStack] = useState<Campo[][]>([]);
-  const [contextStack, setContextStack] = useState<{ lista: Campo[]; index: number; nivel: number }[]>([]);
+  const [bufferStack, setBufferStack] = useState<Parametro[][]>([]);
+  const [contextStack, setContextStack] = useState<{ lista: Parametro[]; index: number; nivel: number }[]>([]);
   const [nivelesConfirmados, setNivelesConfirmados] = useState<number[]>([0]);
   const [modoLectura, setModoLectura] = useState(false);
   const [campoJerarquia, setCampoJerarquia] = useState<string | null>(null);
-  const [jerarquiaVisible, setJerarquiaVisible] = useState<Campo[] | null>(null);
-  const [errores, setErrores] = useState<Campo[]>([]);
+  const [jerarquiaVisible, setJerarquiaVisible] = useState<Parametro[] | null>(null);
+  const [errores, setErrores] = useState<Parametro[]>([]);
   const [nuevoTagPadre, setNuevoTagPadre] = useState(tagPadre || '');
   const [usarFullOutput, setUsarFullOutput] = useState(parsearFullOutput || false);
   const [nuevotipoRespuesta, setTipoRespuesta] = useState<string>(tipoRespuesta || 'json');
@@ -151,7 +160,13 @@ const EditorProceso: React.FC<Props> = ({
 
   useEffect(() => {
     if (nodoId && parametrosError && parametrosError.length > 0) {
-      setErrores(parametrosError);
+      // Convertir campos de error al nuevo formato
+      const erroresConvertidos: Parametro[] = parametrosError.map(campo => ({
+        ...campo,
+        enviarAServidor: false,
+        orden: 0
+      }));
+      setErrores(erroresConvertidos);
     }
   }, [nodoId, parametrosError]);
 
@@ -169,7 +184,12 @@ const EditorProceso: React.FC<Props> = ({
 
 
   useEffect(() => {
-    setSalida(parametrosSalida);
+    const salidaConvertida: Parametro[] = parametrosSalida?.map(param => ({
+      ...param,
+      enviarAServidor: param.enviarAServidor ?? false, // Los de salida por defecto no se envían
+      orden: param.orden ?? 0
+    })) || [];
+    setSalida(salidaConvertida);
   }, [parametrosSalida]);
 
   useEffect(() => {
@@ -187,14 +207,20 @@ const EditorProceso: React.FC<Props> = ({
   
 
   // --- Funciones auxiliares ---
-  const agregarCampo = (lista: Campo[], setLista: (l: Campo[]) => void, nivel = 0) => {
+  const agregarCampo = (lista: Parametro[], setLista: (l: Parametro[]) => void, nivel = 0) => {
     const nombres = lista.map(c => c.nombre.trim());
     if (nombres.includes('')) return alert('Complete todos los nombres antes de agregar uno nuevo.');
-    setLista([...lista, { nombre: '', tipo: 'string' }]);
+    const nuevoParametro: Parametro = {
+      nombre: '',
+      tipo: 'string',
+      enviarAServidor: true,
+      orden: lista.filter(p => p.enviarAServidor ?? true).length + 1
+    };
+    setLista([...lista, nuevoParametro]);
   };
 
   // Renderiza campos y subcampos recursivamente
-  const renderCampos = (campos: Campo[], setCampos: (v: Campo[]) => void, nivel: number): JSX.Element[] => {
+  const renderCampos = (campos: Parametro[], setCampos: (v: Parametro[]) => void, nivel: number): JSX.Element[] => {
     return campos.map((campo, i) => {
       const tipoSimple = ["string", "int", "bool", "date", "float", "json"];
       const puedeAgregarSubnivel = nivelesConfirmados.includes(nivel);
@@ -293,10 +319,11 @@ const EditorProceso: React.FC<Props> = ({
   };
 
   // Renderiza la jerarquía de campos recursivamente
-  const renderJerarquia = (campos: Campo[], nivel = 0): JSX.Element[] => {
+  const renderJerarquia = (campos: Parametro[], nivel = 0): JSX.Element[] => {
     return campos.map((campo, i) => (
       <div key={i} style={{ marginLeft: nivel * 20 }}>
         └─ {campo.nombre} ({campo.tipo})
+        {campo.enviarAServidor && <span style={{ color: '#28a745', fontSize: '12px' }}> ✓ Servidor</span>}
         {campo.subcampos && renderJerarquia(campo.subcampos, nivel + 1)}
       </div>
     ));
@@ -371,9 +398,38 @@ const EditorProceso: React.FC<Props> = ({
 
           {/* Parámetros de Entrada */}
           <h4>🧩 Parámetros de Entrada</h4>
-          <button onClick={() => agregarCampo(entrada, setEntrada, 0)}>➕ Agregar</button>
-             {renderCampos(entrada, setEntrada, 0)} 
-            {/* <SortableCampoList campos={entrada} setCampos={setEntrada} /> */}
+          <div style={{ marginBottom: '10px' }}>
+            <button 
+              onClick={() => agregarCampo(entrada, setEntrada, 0)}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '10px'
+              }}
+            >
+              ➕ Agregar Parámetro
+            </button>
+          </div>
+          <SortableParametrosList 
+            parametros={entrada}
+            setParametros={setEntrada}
+            onEditarSubcampos={(index) => {
+              const campo = entrada[index];
+              setBufferStack([campo.subcampos || [], ...bufferStack]);
+              setContextStack([{ lista: entrada, index, nivel: 0 }, ...contextStack]);
+              setModoLectura(true);
+            }}
+            onVerJerarquia={(index) => {
+              const campo = entrada[index];
+              setJerarquiaVisible([campo]);
+              setCampoJerarquia(campo.nombre);
+            }}
+            mostrarCheckbox={true}
+          />
 
 
 
@@ -414,9 +470,38 @@ const EditorProceso: React.FC<Props> = ({
 
           {/* Parámetros de Salida */}
           <h4>📤 Parámetros de Salida</h4>
-          <button onClick={() => agregarCampo(salida, setSalida, 0)}>➕ Agregar</button>
-           {renderCampos(salida, setSalida, 0)} 
-          {/* <SortableCampoList campos={salida} setCampos={setSalida} /> */}
+          <div style={{ marginBottom: '10px' }}>
+            <button 
+              onClick={() => agregarCampo(salida, setSalida, 0)}
+              style={{
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginRight: '10px'
+              }}
+            >
+              ➕ Agregar Parámetro
+            </button>
+          </div>
+          <SortableParametrosList 
+            parametros={salida}
+            setParametros={setSalida}
+            onEditarSubcampos={(index) => {
+              const campo = salida[index];
+              setBufferStack([campo.subcampos || [], ...bufferStack]);
+              setContextStack([{ lista: salida, index, nivel: 0 }, ...contextStack]);
+              setModoLectura(true);
+            }}
+            onVerJerarquia={(index) => {
+              const campo = salida[index];
+              setJerarquiaVisible([campo]);
+              setCampoJerarquia(campo.nombre);
+            }}
+            mostrarCheckbox={false}
+          />
 
 
           {/* Parámetros de Error */}
@@ -437,7 +522,7 @@ const EditorProceso: React.FC<Props> = ({
   <button
     onClick={() => {
       // --- Validación de campos vacíos en entrada y salida (incluye subcampos) ---
-      const tieneVacios = (lista: Campo[]): boolean =>
+      const tieneVacios = (lista: Parametro[]): boolean =>
         lista.some(
           c =>
             !c.nombre ||
@@ -446,7 +531,7 @@ const EditorProceso: React.FC<Props> = ({
         );
 
       // --- Validación de duplicados a nivel raíz ---
-      const tieneDuplicadosNivel1 = (lista: Campo[]): boolean => {
+      const tieneDuplicadosNivel1 = (lista: Parametro[]): boolean => {
         const nombres = lista.map(c => c.nombre.trim());
         return nombres.some((n, i) => n && nombres.indexOf(n) !== i);
       };
@@ -569,17 +654,19 @@ const EditorProceso: React.FC<Props> = ({
                     }
                     try {
                       // --- Parseo de JSON ---
-                      const camposDesdeObjeto = (obj: any): Campo[] => {
+                      const camposDesdeObjeto = (obj: any): Parametro[] => {
                         if (typeof obj !== 'object' || obj === null) return [];
                         return Object.entries(obj).map(([key, value]) => {
                           const tipo = Array.isArray(value) ? 'array' :
                             typeof value === 'object' ? 'object' :
                             typeof value;
-                          const campo: Campo = {
+                          const campo: Parametro = {
                             nombre: key,
                             tipo: tipo === 'number' ? 'int' :
                                   tipo === 'boolean' ? 'bool' :
-                                  tipo
+                                  tipo,
+                            enviarAServidor: false, // Por defecto false para parámetros de salida parseados
+                            orden: 0
                           };
                           if (tipo === 'object') campo.subcampos = camposDesdeObjeto(value);
                           if (tipo === 'array' && Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
@@ -600,15 +687,17 @@ const EditorProceso: React.FC<Props> = ({
                       else if (nuevotipoRespuesta === 'xml') {
                         const parser = new DOMParser();
                         const xmlDoc = parser.parseFromString(nuevofullOutput, "text/xml");
-                        const parseXMLElement = (element: Element): Campo[] => {
+                        const parseXMLElement = (element: Element): Parametro[] => {
                           const children = Array.from(element.children);
                           const uniqueNames = new Set(children.map(c => c.tagName));
                           return Array.from(uniqueNames).map(name => {
                             const sample = children.find(c => c.tagName === name)!;
                             const sub = parseXMLElement(sample);
-                            const campo: Campo = {
+                            const campo: Parametro = {
                               nombre: name,
-                              tipo: sub.length > 0 ? 'object' : 'string'
+                              tipo: sub.length > 0 ? 'object' : 'string',
+                              enviarAServidor: false, // Por defecto false para parámetros de salida parseados
+                              orden: 0
                             };
                             if (sub.length > 0) campo.subcampos = sub;
                             return campo;
