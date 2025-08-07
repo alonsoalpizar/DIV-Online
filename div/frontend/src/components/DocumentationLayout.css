@@ -1,0 +1,109 @@
+/* Layout de documentación independiente */
+
+.documentation-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.doc-layout-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.doc-layout-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-logo {
+  font-size: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.doc-layout-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 2px 0;
+}
+
+.doc-layout-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 400;
+}
+
+.doc-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.doc-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+/* Content */
+.doc-layout-content {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* Footer */
+.doc-layout-footer {
+  background: #1e293b;
+  color: #94a3b8;
+  text-align: center;
+  padding: 12px 24px;
+  font-size: 0.8rem;
+}
+
+.doc-layout-footer p {
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .doc-layout-header {
+    padding: 12px 16px;
+  }
+  
+  .doc-layout-brand {
+    gap: 8px;
+  }
+  
+  .doc-layout-title {
+    font-size: 1.1rem;
+  }
+  
+  .doc-layout-subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .doc-close-btn {
+    padding: 6px 8px;
+    font-size: 1rem;
+  }
+}

@@ -11,13 +11,13 @@ interface Props {
 }
 
 const tiposAgrupados = {
-  'Bases de Datos Relacionales': ['SQL Server', 'Oracle', 'MySQL', 'PostgreSQL'],
+  'Bases de Datos Relacionales': ['SQLServer', 'Oracle', 'MySQL', 'PostgreSQL'],
   'Bases de Datos NoSQL': ['MongoDB', 'Redis'],
   'Bases de Datos Analíticas': ['Snowflake', 'BigQuery'],
   'APIs y Servicios': ['REST', 'SOAP'],
   'Servicios en Tiempo Real': ['Kafka', 'RabbitMQ'],
   'Servicios Híbridos': ['Firebase', 'Supabase'],
-  'Conexiones por Socket': ['Socket TCP'],
+  'Conexiones por Socket': ['SocketTCP'],
 };
 
 const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
@@ -91,8 +91,29 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
 
   const handleTipoChange = (nuevoTipo: string) => {
     setTipo(nuevoTipo);
-    const extrasParaTipo = extrasPorTipoServidor[nuevoTipo] || {};
-    setConfig(extrasParaTipo);
+    const extrasDefault = extrasPorTipoServidor[nuevoTipo];
+    if (extrasDefault) {
+      const confirmar = confirm("¿Desea reemplazar la configuración actual por la sugerida para este tipo?");
+      if (confirmar) {
+        setConfig({ ...extrasDefault });
+      }
+    }
+  };
+
+  const handleExtraChange = (key: string, value: string) => {
+    setConfig(prev => ({ ...prev, [key]: value }));
+  };
+
+  const agregarCampoExtra = () => {
+    const clave = prompt('Nombre del campo extra:');
+    if (clave && !extras[clave]) {
+      setConfig(prev => ({ ...prev, [clave]: '' }));
+    }
+  };
+
+  const eliminarCampoExtra = (key: string) => {
+    const { [key]: _, ...rest } = extras;
+    setConfig(rest);
   };
 
   return (
@@ -189,30 +210,34 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
         />
       </div>
 
-      <div className="form-group">
-        <label>Configuración Extra:</label>
-        <div className="extras-container">
-          {Object.entries(extras).map(([key, value]) => (
-            <div key={key} className="extra-field">
-              <label>{key}:</label>
-              <input
-                type="text"
-                value={value}
-                onChange={(e) => setConfig({ ...extras, [key]: e.target.value })}
-                placeholder={`Valor para ${key}`}
-              />
-            </div>
-          ))}
+      <div className="config-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h4 style={{ margin: 0 }}>Campos Extras</h4>
+          <a 
+            href="/docs/campos-servidor" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="btn-documentacion"
+          >
+            📖 Ver Documentación
+          </a>
         </div>
+        <button onClick={agregarCampoExtra} className="btn-agregar">➕ Agregar Campo</button>
+        {Object.entries(extras).map(([key, value]) => (
+          <div key={key} className="config-row">
+            <label>{key}</label>
+            <input
+              value={value}
+              onChange={e => handleExtraChange(key, e.target.value)}
+            />
+            <button onClick={() => eliminarCampoExtra(key)}>❌</button>
+          </div>
+        ))}
       </div>
 
       <div className="form-actions">
-        <button onClick={handleGuardar} className="btn-primary">
-          {generandoCodigo ? 'Generando código...' : 'Guardar'}
-        </button>
-        <button onClick={onCancelar} className="btn-secondary">
-          Cancelar
-        </button>
+        <button onClick={handleGuardar} className="btn-guardar">💾 Guardar</button>
+        <button onClick={onCancelar} className="btn-cancelar">Cancelar</button>
       </div>
     </div>
   );

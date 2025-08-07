@@ -1,4 +1,4 @@
-import type { Campo } from '../types/tabla';
+import type { Campo, CampoAvanzado, ConfigSplitter } from '../types/tabla';
 import React, { useEffect, useState } from 'react';
 
 // --- Props del componente ---
@@ -7,23 +7,29 @@ interface Props {
   modoOperacion: 'descomponer' | 'unir';
   campoEntrada: string;
   campoSalida: string;
-  modoParseo: 'delimitado' | 'plano';
+  modoParseo: 'delimitado' | 'plano' | 'plantilla';
   delimitadorPrincipal: string;
   separadorClaveValor: string;
   segmentosFijos: any[];
   camposUnir: Campo[];
   parametrosSalida: Campo[];
+  codificacion?: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8';
+  prefijo?: string;
+  sufijo?: string;
   onGuardar: (
     nuevoLabel: string,
     modoOperacion: 'descomponer' | 'unir',
     campoEntrada: string,
     campoSalida: string,
-    modoParseo: 'delimitado' | 'plano',
+    modoParseo: 'delimitado' | 'plano' | 'plantilla',
     delimitador: string,
     separador: string,
     segmentos: any[],
     camposUnir: Campo[],
-    salida: Campo[]
+    salida: Campo[],
+    codificacion: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8',
+    prefijo: string,
+    sufijo: string
   ) => void;
   onCancelar: () => void;
 }
@@ -42,6 +48,13 @@ const tieneDuplicadosSegmentos = (arr: any[]) => {
 const tieneVaciosSegmentos = (arr: any[]) =>
   arr.some(s => !s.nombre || !s.tipo || !s.longitud);
 
+const tieneRepeticionesInvalidas = (arr: any[]) =>
+  arr.some(s => {
+    const repMax = s.repeticiones || 1;
+    const repMin = s.repeticiones_minimas || 1;
+    return repMax < repMin || repMax < 1 || repMin < 1 || repMax > 100;
+  });
+
 const EditorSplitter: React.FC<Props> = ({
   label,
   modoOperacion,
@@ -53,6 +66,9 @@ const EditorSplitter: React.FC<Props> = ({
   segmentosFijos,
   camposUnir,
   parametrosSalida,
+  codificacion = 'none',
+  prefijo = '',
+  sufijo = '',
   onGuardar,
   onCancelar,
 }) => {
@@ -65,6 +81,10 @@ const EditorSplitter: React.FC<Props> = ({
   const [delimitador, setDelimitador] = useState(delimitadorPrincipal || '|');
   const [separador, setSeparador] = useState(separadorClaveValor || '=');
   const [tramaEjemplo, setTramaEjemplo] = useState("codigo=123|cliente=Alonso|monto=5000");
+  const [codificacionLocal, setCodificacionLocal] = useState<'none' | 'base64' | 'hex' | 'ascii' | 'utf8'>(codificacion);
+  const [prefijoLocal, setPrefijoLocal] = useState(prefijo);
+  const [sufijoLocal, setSufijoLocal] = useState(sufijo);
+  const [vistaPrevia, setVistaPrevia] = useState('');
 
   // --- Estados para campos y segmentos ---
   const [camposDetectados, setCamposDetectados] = useState<Campo[]>(
@@ -78,6 +98,34 @@ const EditorSplitter: React.FC<Props> = ({
   );
 
   const tiposDisponibles = ['string', 'int', 'float', 'decimal', 'date', 'boolean'];
+  const codificacionesDisponibles = ['none', 'base64', 'hex', 'ascii', 'utf8'];
+
+  // Función para generar vista previa de trama
+  const generarVistaPrevia = () => {
+    if (modo === 'unir' && camposManual.length > 0) {
+      const ejemplo = camposManual.reduce((acc, campo) => {
+        acc[campo.nombre] = `valor_${campo.nombre}`;
+        return acc;
+      }, {} as any);
+      
+      let trama = '';
+      if (modoParseoLocal === 'delimitado') {
+        trama = camposManual.map(c => `${c.nombre}${separador}${ejemplo[c.nombre]}`).join(delimitador);
+      } else {
+        trama = Object.values(ejemplo).join('');
+      }
+      
+      const tramaFinal = `${prefijoLocal}${trama}${sufijoLocal}`;
+      setVistaPrevia(`Trama: ${tramaFinal}${codificacionLocal !== 'none' ? ` (${codificacionLocal})` : ''}`);
+    } else {
+      setVistaPrevia('');
+    }
+  };
+
+  // Actualizar vista previa cuando cambien los parámetros
+  React.useEffect(() => {
+    generarVistaPrevia();
+  }, [modo, camposManual, modoParseoLocal, separador, delimitador, prefijoLocal, sufijoLocal, codificacionLocal]);
 
   // --- Parseo de trama de ejemplo para modo delimitado ---
   const parsearTrama = () => {
@@ -123,7 +171,7 @@ const EditorSplitter: React.FC<Props> = ({
   const agregarSegmento = () => {
     setSegmentosFijosLocal([
       ...segmentosFijosLocal,
-      { nombre: '', longitud: '', tipo: 'string', repeticiones: '' }
+      { nombre: '', longitud: '', tipo: 'string', repeticiones: 1, repeticiones_minimas: 1 }
     ]);
   };
   const actualizarSegmento = (index: number, campo: Partial<any>) => {
@@ -182,7 +230,31 @@ const EditorSplitter: React.FC<Props> = ({
               <select value={modoParseoLocal} onChange={e => setModoParseoLocal(e.target.value as any)}>
                 <option value="delimitado">Delimitado</option>
                 <option value="plano">Por posición fija</option>
+                <option value="plantilla">Plantilla TCP</option>
               </select>
+
+              <label>🔒 Codificación</label>
+              <select value={codificacionLocal} onChange={e => setCodificacionLocal(e.target.value as any)}>
+                <option value="none">Sin codificación</option>
+                <option value="base64">Base64</option>
+                <option value="hex">Hexadecimal</option>
+                <option value="ascii">ASCII</option>
+                <option value="utf8">UTF-8</option>
+              </select>
+
+              <label>🏷️ Prefijo de trama</label>
+              <input 
+                value={prefijoLocal} 
+                onChange={e => setPrefijoLocal(e.target.value)}
+                placeholder="Ej: STX, BEGIN_, etc."
+              />
+
+              <label>🏁 Sufijo de trama</label>
+              <input 
+                value={sufijoLocal} 
+                onChange={e => setSufijoLocal(e.target.value)}
+                placeholder="Ej: ETX, \n, \r\n, etc."
+              />
 
               {/* Parseo delimitado */}
               {modoParseoLocal === 'delimitado' && (
@@ -203,19 +275,109 @@ const EditorSplitter: React.FC<Props> = ({
               {/* Parseo por posición fija */}
               {modoParseoLocal === 'plano' && (
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <h4>📐 Segmentos fijos</h4>
+                  <h4>📏 Configuración de campos por posición fija</h4>
+                  <div style={{ marginBottom: '10px', fontSize: '0.9em', color: '#666' }}>
+                    📌 Define cada campo con su posición, longitud y repeticiones máximas
+                  </div>
+                  
+                  {/* Headers */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 40px', gap: '6px', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.85em', color: '#555' }}>
+                    <div>Campo</div>
+                    <div>Tipo</div>
+                    <div>Longitud (caracteres)</div>
+                    <div>Rep. Máx</div>
+                    <div>Rep. Mín</div>
+                    <div></div>
+                  </div>
                   {segmentosFijosLocal.map((seg, index) => (
-                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr 40px', gap: '6px', marginBottom: '6px' }}>
-                      <input placeholder="Campo" value={seg.nombre} onChange={e => actualizarSegmento(index, { nombre: e.target.value })} />
-                      <input placeholder="Longitud" type="number" value={seg.longitud} onChange={e => actualizarSegmento(index, { longitud: Number(e.target.value) })} />
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 40px', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
+                      <input 
+                        placeholder="Nombre del campo" 
+                        value={seg.nombre} 
+                        onChange={e => actualizarSegmento(index, { nombre: e.target.value })} 
+                      />
                       <select value={seg.tipo} onChange={e => actualizarSegmento(index, { tipo: e.target.value })}>
                         {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <input placeholder="Repeticiones" type="number" value={seg.repeticiones || ''} onChange={e => actualizarSegmento(index, { repeticiones: e.target.value ? Number(e.target.value) : '' })} />
-                      <button onClick={() => eliminarSegmento(index)}>❌</button>
+                      <input 
+                        placeholder="10" 
+                        type="number" 
+                        min="1"
+                        value={seg.longitud} 
+                        onChange={e => actualizarSegmento(index, { longitud: Number(e.target.value) })} 
+                      />
+                      <input 
+                        placeholder="1" 
+                        type="number" 
+                        min="1"
+                        max="100"
+                        value={seg.repeticiones || 1} 
+                        onChange={e => actualizarSegmento(index, { repeticiones: Number(e.target.value) || 1 })} 
+                      />
+                      <input 
+                        placeholder="1" 
+                        type="number" 
+                        min="1"
+                        value={seg.repeticiones_minimas || 1} 
+                        onChange={e => actualizarSegmento(index, { repeticiones_minimas: Number(e.target.value) || 1 })} 
+                      />
+                      <button onClick={() => eliminarSegmento(index)} style={{ background: '#ff4444', color: 'white', border: 'none', borderRadius: '3px', padding: '4px 6px' }}>
+                        ❌
+                      </button>
                     </div>
                   ))}
-                  <button onClick={agregarSegmento}>➕ Agregar segmento</button>
+                  <button 
+                    onClick={agregarSegmento} 
+                    style={{ marginTop: '8px', padding: '6px 12px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >
+                    ➕ Agregar campo
+                  </button>
+                  
+                  {/* Ejemplo visual */}
+                  {segmentosFijosLocal.length > 0 && (
+                    <div style={{ marginTop: '15px', padding: '10px', background: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }}>
+                      <h5>📏 Estructura de trama y campos resultantes:</h5>
+                      
+                      {/* Estructura de trama */}
+                      <div style={{ fontFamily: 'monospace', fontSize: '0.9em', marginBottom: '10px' }}>
+                        <strong>Trama física:</strong><br />
+                        {segmentosFijosLocal.map((seg, i) => (
+                          <span key={i} style={{ marginRight: '2px', color: i % 2 === 0 ? '#0066cc' : '#cc6600' }}>
+                            {seg.nombre}({seg.longitud})
+                            {seg.repeticiones && seg.repeticiones > 1 && `[x${seg.repeticiones}]`}
+                            {i < segmentosFijosLocal.length - 1 && ' | '}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      {/* Estructura de campos */}
+                      <div style={{ fontSize: '0.9em' }}>
+                        <strong>Campos de salida:</strong>
+                        <ul style={{ marginTop: '5px', paddingLeft: '20px' }}>
+                          {segmentosFijosLocal.map((seg, i) => (
+                            <li key={i} style={{ marginBottom: '4px' }}>
+                              {seg.repeticiones && seg.repeticiones > 1 ? (
+                                <>
+                                  <strong>{seg.nombre}</strong> (object con {seg.repeticiones} campos)
+                                  <ul style={{ marginLeft: '15px', color: '#666', fontSize: '0.85em' }}>
+                                    <li>↳ Campos: {seg.nombre}1, {seg.nombre}2, {seg.nombre}3{seg.repeticiones > 3 ? '...' : ''}</li>
+                                    <li>↳ Cada campo: {seg.tipo}, {seg.longitud} caracteres</li>
+                                    <li>↳ Formato: campo:valor</li>
+                                  </ul>
+                                </>
+                              ) : (
+                                <><strong>{seg.nombre}</strong> ({seg.tipo}, {seg.longitud} caracteres)</>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div style={{ fontSize: '0.8em', color: '#666', marginTop: '8px', borderTop: '1px solid #ddd', paddingTop: '5px' }}>
+                        <strong>Longitud total máxima:</strong> {segmentosFijosLocal.reduce((acc, seg) => acc + (seg.longitud * (seg.repeticiones || 1)), 0)} caracteres
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -245,6 +407,29 @@ const EditorSplitter: React.FC<Props> = ({
                 <span style={{ fontSize: '0.85em', color: '#666', alignSelf: 'center' }}>string</span>
               </div>
 
+              <label>🔒 Codificación de salida</label>
+              <select value={codificacionLocal} onChange={e => setCodificacionLocal(e.target.value as any)}>
+                <option value="none">Sin codificación</option>
+                <option value="base64">Base64</option>
+                <option value="hex">Hexadecimal</option>
+                <option value="ascii">ASCII</option>
+                <option value="utf8">UTF-8</option>
+              </select>
+
+              <label>🏷️ Prefijo de trama</label>
+              <input 
+                value={prefijoLocal} 
+                onChange={e => setPrefijoLocal(e.target.value)}
+                placeholder="Ej: STX, BEGIN_, etc."
+              />
+
+              <label>🏁 Sufijo de trama</label>
+              <input 
+                value={sufijoLocal} 
+                onChange={e => setSufijoLocal(e.target.value)}
+                placeholder="Ej: ETX, \n, \r\n, etc."
+              />
+
               <div style={{ gridColumn: '1 / -1' }}>
                 <h4>🔁 Campos de entrada (a construir)</h4>
                 {camposManual.map((campo, index) => (
@@ -272,9 +457,33 @@ const EditorSplitter: React.FC<Props> = ({
             </h4>
             <ul>
               {camposFinales.map((c, i) => (
-                <li key={i}>🔹 <strong>{c.nombre}</strong> (<em>{c.tipo}</em>)</li>
+                <li key={i} style={{ marginBottom: '8px' }}>
+                  🔹 <strong>{c.nombre}</strong> (<em>{c.tipo}</em>)
+                  {c.subcampos && c.subcampos.length > 0 && (
+                    <ul style={{ marginTop: '4px', marginLeft: '20px', fontSize: '0.9em' }}>
+                      {c.subcampos.map((sub, j) => (
+                        <li key={j} style={{ marginBottom: '2px', color: '#666' }}>
+                          ↳ <strong>{sub.nombre}</strong>: valor ({sub.tipo})
+                        </li>
+                      ))}
+                      <li style={{ color: '#888', fontSize: '0.85em', fontStyle: 'italic' }}>
+                        📊 {c.tipo === 'object' ? 'Objeto' : 'Array'} con {c.subcampos.length} campos
+                      </li>
+                    </ul>
+                  )}
+                </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Vista previa de trama */}
+        {vistaPrevia && (
+          <div style={{ marginTop: '15px', padding: '10px', background: '#f0f8ff', border: '1px solid #b0d4f1', borderRadius: '5px' }}>
+            <h4>🔍 Vista previa de trama:</h4>
+            <code style={{ display: 'block', padding: '8px', background: '#fff', border: '1px solid #ddd', borderRadius: '3px', fontFamily: 'monospace' }}>
+              {vistaPrevia}
+            </code>
           </div>
         )}
 
@@ -288,10 +497,32 @@ const EditorSplitter: React.FC<Props> = ({
                 return;
               }
 
+              // Validaciones para codificación
+              if (codificacionLocal && !codificacionesDisponibles.includes(codificacionLocal)) {
+                alert('Codificación no válida.');
+                return;
+              }
+
+              // Validaciones para caracteres especiales en prefijo/sufijo
+              const procesarCaracteresEspeciales = (texto: string) => {
+                return texto.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\t/g, '\t');
+              };
+              
+              const prefijoFinal = procesarCaracteresEspeciales(prefijoLocal);
+              const sufijoFinal = procesarCaracteresEspeciales(sufijoLocal);
+
               if (modo === 'descomponer') {
                 if (modoParseoLocal === 'plano') {
-                  if (tieneDuplicadosSegmentos(segmentosFijosLocal) || tieneVaciosSegmentos(segmentosFijosLocal)) {
-                    alert('No puede haber campos vacíos o duplicados en segmentos fijos.');
+                  if (tieneDuplicadosSegmentos(segmentosFijosLocal)) {
+                    alert('No puede haber campos duplicados en segmentos fijos.');
+                    return;
+                  }
+                  if (tieneVaciosSegmentos(segmentosFijosLocal)) {
+                    alert('Todos los campos deben tener nombre, tipo y longitud definidos.');
+                    return;
+                  }
+                  if (tieneRepeticionesInvalidas(segmentosFijosLocal)) {
+                    alert('Las repeticiones deben ser válidas: mínimo ≤ máximo, entre 1 y 100.');
                     return;
                   }
                 } else {
@@ -308,13 +539,35 @@ const EditorSplitter: React.FC<Props> = ({
               }
 
               // --- Construcción de salida ---
-              const salidaFinal: Campo[] =
-                modoParseoLocal === 'plano'
-                  ? segmentosFijosLocal.map((seg) => ({
+              // Para posición fija con repeticiones, crear estructura jerárquica
+              const expandirCamposConRepeticiones = (segmentos: any[]): Campo[] => {
+                const camposExpandidos: Campo[] = [];
+                segmentos.forEach(seg => {
+                  const repeticiones = seg.repeticiones || 1;
+                  if (repeticiones === 1) {
+                    // Campo simple sin repeticiones
+                    camposExpandidos.push({
                       nombre: seg.nombre,
                       tipo: seg.tipo || 'string'
-                    }))
-                  : camposDetectados;
+                    });
+                  } else {
+                    // Campo padre con subcampos (array campo:valor)
+                    const subcampos: Campo[] = [];
+                    for (let i = 1; i <= repeticiones; i++) {
+                      subcampos.push({
+                        nombre: `${seg.nombre}${i}`, // Patrón: campo1, campo2, campo3...
+                        tipo: seg.tipo || 'string'
+                      });
+                    }
+                    camposExpandidos.push({
+                      nombre: seg.nombre,
+                      tipo: 'object', // Tipo object para indicar estructura campo:valor
+                      subcampos: subcampos
+                    });
+                  }
+                });
+                return camposExpandidos;
+              };
 
               onGuardar(
                 nuevoLabel,
@@ -328,12 +581,12 @@ const EditorSplitter: React.FC<Props> = ({
                 camposManual,
                 modo === 'descomponer'
                   ? (modoParseoLocal === 'plano'
-                      ? segmentosFijosLocal.map(seg => ({
-                          nombre: seg.nombre,
-                          tipo: seg.tipo || 'string'
-                        }))
+                      ? expandirCamposConRepeticiones(segmentosFijosLocal)
                       : camposDetectados)
-                  : [{ nombre: salida, tipo: 'string' }]
+                  : [{ nombre: salida, tipo: 'string' }],
+                codificacionLocal,
+                prefijoFinal,
+                sufijoFinal
               );
             }}
           >

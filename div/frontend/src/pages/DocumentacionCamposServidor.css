@@ -1,0 +1,384 @@
+/* Documentación de Campos Servidor - Estilos */
+
+.documentacion-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: transparent;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header */
+.doc-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.doc-title-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.doc-icon {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  font-size: 1.5rem;
+}
+
+.doc-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.doc-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Info Banner */
+.info-banner {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.info-icon {
+  font-size: 1.3rem;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+.info-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.info-content p {
+  margin: 0;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+/* Filtros */
+.doc-filters {
+  margin-bottom: 32px;
+}
+
+.search-box {
+  position: relative;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Contenido */
+.doc-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Categorías */
+.categoria-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.categoria-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.categoria-header:hover {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.categoria-header.expandida {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.categoria-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.categoria-icono {
+  font-size: 1.3rem;
+}
+
+.categoria-titulo {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.categoria-count {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+/* Contenido de categoría */
+.categoria-content {
+  padding: 0;
+}
+
+/* Servidor */
+.servidor-doc {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 24px;
+}
+
+.servidor-doc:last-child {
+  border-bottom: none;
+}
+
+.servidor-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.servidor-icon {
+  color: #667eea;
+  font-size: 1.2rem;
+}
+
+.servidor-info {
+  flex: 1;
+}
+
+.servidor-nombre {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #1e293b;
+}
+
+.servidor-descripcion {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.servidor-stats {
+  text-align: right;
+}
+
+.campos-count {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Grid de campos */
+.campos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .campos-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Campo individual */
+.campo-doc {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.campo-doc:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.campo-doc.importante {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.campo-doc.importante:hover {
+  border-color: #d97706;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.campo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.campo-nombre {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: #1e293b;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.badge-importante {
+  background: #f59e0b;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.campo-default {
+  background: #1e293b;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  border: 1px solid #334155;
+}
+
+.campo-descripcion {
+  margin: 0 0 12px 0;
+  color: #475569;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.campo-ejemplos {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #4c1d95;
+}
+
+.campo-ejemplos strong {
+  color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .documentacion-container {
+    padding: 16px;
+  }
+  
+  .doc-header {
+    padding: 24px;
+  }
+  
+  .doc-title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .doc-header {
+    padding: 20px;
+  }
+  
+  .doc-title {
+    font-size: 1.5rem;
+  }
+  
+  .doc-title-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .servidor-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .campo-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .campo-nombre {
+    font-size: 0.9rem;
+  }
+  
+  .categoria-header {
+    padding: 16px 20px;
+  }
+  
+  .categoria-titulo {
+    font-size: 1.1rem;
+  }
+}

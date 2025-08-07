@@ -1,17 +1,37 @@
-.form-container {
-  max-width: 700px;
-  margin: 0 auto;
-  background-color: #fefefe;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+/* Contenedor principal del formulario */
+.servidor-form {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-height: none;
+  overflow-y: visible;
 }
 
+.form-container {
+  max-width: 100%;
+  width: 100%;
+  margin: 0;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-height: none;
+  overflow-y: visible;
+}
+
+.servidor-form h3,
 .form-container h2 {
   text-align: center;
   margin-bottom: 24px;
   color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 /* Estilos para código con auto-generación */
@@ -56,11 +76,49 @@
   transform: scale(0.95);
 }
 
+/* Grupos de campos individuales */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+/* Grid layout para formularios más complejos */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 2fr;
   gap: 12px 16px;
   margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 .form-grid label {
@@ -79,40 +137,82 @@
 
 .config-section {
   margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #fafafa;
 }
 
 .config-section h4 {
-  margin-bottom: 12px;
-  color: #444;
-  font-size: 16px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 2px solid #4CAF50;
+  padding-bottom: 8px;
 }
 
 .config-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 2fr auto;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
 }
 
 .config-row label {
-  width: 120px;
-  font-weight: bold;
+  font-weight: 600;
   color: #555;
+  font-size: 0.85rem;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .config-row input {
-  flex: 1;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.config-row input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
 }
 
 .config-row button {
-  background-color: transparent;
+  background-color: #ff4444;
+  color: white;
   border: none;
-  font-size: 18px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
   cursor: pointer;
-  color: #d33;
+  transition: background-color 0.2s ease;
+  min-width: 32px;
+  height: 32px;
+}
+
+.config-row button:hover {
+  background-color: #cc0000;
+}
+
+@media (max-width: 768px) {
+  .config-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .config-row label {
+    font-size: 0.9rem;
+  }
 }
 
 .btn-agregar {
@@ -120,19 +220,67 @@
   background-color: #4CAF50;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .btn-agregar:hover {
   background-color: #45a049;
+  transform: translateY(-1px);
+}
+
+.btn-agregar:active {
+  transform: translateY(0);
+}
+
+.btn-documentacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-documentacion:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  text-decoration: none;
+  color: white;
+}
+
+.btn-documentacion:active {
+  transform: translateY(0);
 }
 
 .form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
 }
 
 .btn-guardar {
