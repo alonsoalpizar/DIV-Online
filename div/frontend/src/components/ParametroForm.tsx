@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Parametro } from '../types/parametro';
+import { FaCog, FaTimes } from 'react-icons/fa';
+import './ParametroForm.css';
 
 interface Props {
   parametro?: Parametro | null;
@@ -37,22 +39,68 @@ const ParametroForm: React.FC<Props> = ({ parametro, onGuardar, onCancelar }) =>
   };
 
   return (
-    <div className="form-container">
-      <h2>{parametro ? 'Editar Parámetro' : 'Nuevo Parámetro'}</h2>
-      <div className="form-grid">
-        <label>Nombre:</label>
-        <input value={nombre} onChange={e => setNombre(e.target.value)} />
-
-        <label>Valor:</label>
-        <input value={valor} onChange={e => setValor(e.target.value)} />
-
-        <label>Descripción:</label>
-        <input value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+    <div className="parametro-form">
+      {/* Header */}
+      <div className="parametro-form-header">
+        <div className="form-title-section">
+          <FaCog className="parametro-icon" />
+          <div>
+            <h2>{parametro ? 'Editar Parámetro' : 'Nuevo Parámetro'}</h2>
+            <p>Configure una variable del sistema</p>
+          </div>
+        </div>
+        <button className="btn-close" onClick={onCancelar}>
+          <FaTimes />
+        </button>
       </div>
 
-      <div className="form-actions">
-        <button onClick={handleGuardar} className="btn-guardar">💾 Guardar</button>
-        <button onClick={onCancelar} className="btn-cancelar">Cancelar</button>
+      {/* Form Body */}
+      <div className="parametro-form-body">
+        <div className="form-group">
+          <label>Nombre:</label>
+          <input 
+            value={nombre} 
+            onChange={e => setNombre(e.target.value)}
+            placeholder="TIMEOUT_DB, MAX_CONNECTIONS, API_VERSION..."
+          />
+          <div className="help-text info">
+            Use nombres descriptivos en mayúsculas con guiones bajos
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Valor:</label>
+          <input 
+            value={valor} 
+            onChange={e => setValor(e.target.value)}
+            placeholder="30, true, https://api.ejemplo.com, production..."
+          />
+          <div className="help-text">
+            El valor que tomará este parámetro en el sistema
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Descripción:</label>
+          <textarea 
+            value={descripcion} 
+            onChange={e => setDescripcion(e.target.value)}
+            placeholder="Explique qué hace este parámetro y cómo afecta al sistema..."
+          />
+          <div className="help-text">
+            Descripción opcional para documentar el propósito del parámetro
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="parametro-form-footer">
+        <button onClick={onCancelar} className="btn btn-secondary">
+          Cancelar
+        </button>
+        <button onClick={handleGuardar} className="btn btn-primary">
+          💾 Guardar Parámetro
+        </button>
       </div>
     </div>
   );

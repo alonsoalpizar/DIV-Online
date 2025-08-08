@@ -47,7 +47,9 @@ const ConfiguracionSistema = () => {
   }, []);
 
   const guardarConfiguracion = () => {
-    localStorage.setItem('configSistema', JSON.stringify({ ...config, origen: 'local' }));
+    const configLimpia = { ...config, origen: 'local' };
+    localStorage.setItem('configSistema', JSON.stringify(configLimpia));
+    setConfiguracion(configLimpia); // Actualizar la configuración global
     alert('✅ Configuración guardada localmente.');
   };
 
@@ -147,6 +149,7 @@ const ConfiguracionSistema = () => {
       <input
         value={config.urlBase}
         onChange={e => setConfig({ ...config, urlBase: e.target.value })}
+        placeholder="Producción: http://173.249.49.235/api | Local: http://localhost:30000"
         style={{ width: '100%', marginBottom: '10px' }}
       />
 

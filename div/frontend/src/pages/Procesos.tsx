@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Proceso } from '../types/proceso';
 import ProcesoForm from '../components/ProcesoForm';
 import ProcesoList from '../components/ProcesoList';
+import Modal from '../components/Modal';
 import { FaPlus, FaCogs, FaSearch } from 'react-icons/fa';
 import { getApiBase } from '../utils/configuracion';
 
@@ -64,23 +65,6 @@ const Procesos = () => {
   useEffect(() => {
     cargarProcesos();
   }, []);
-
-  if (mostrarFormulario) {
-    return (
-      <div className="page-container">
-        <div className="form-container">
-          <ProcesoForm
-            proceso={procesoSeleccionado}
-            onGuardar={guardarProceso}
-            onCancelar={() => {
-              setMostrarFormulario(false);
-              setProcesoSeleccionado(null);
-            }}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="page-container">
@@ -161,6 +145,18 @@ const Procesos = () => {
           </div>
         )}
       </div>
+
+      {/* Modal para formulario de proceso */}
+      <Modal isOpen={mostrarFormulario} onClose={() => setMostrarFormulario(false)}>
+        <ProcesoForm
+          proceso={procesoSeleccionado}
+          onGuardar={guardarProceso}
+          onCancelar={() => {
+            setMostrarFormulario(false);
+            setProcesoSeleccionado(null);
+          }}
+        />
+      </Modal>
     </div>
   );
 };

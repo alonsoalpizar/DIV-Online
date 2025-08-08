@@ -49,16 +49,39 @@ const Servidores = () => {
 
   const guardarServidor = async (servidor: Servidor) => {
     try {
-      if (servidor.id) {
+      console.log('Datos del servidor a guardar:', servidor);
+      
+      // Verificación más explícita para determinar si es nuevo o edición
+      if (servidor.id && servidor.id !== '') {
+        console.log('Actualizando servidor existente con ID:', servidor.id);
         await axios.put(`${getApiBase()}/servidores/${servidor.id}`, servidor);
+        console.log('Servidor actualizado:', servidor.codigo);
       } else {
-        await axios.post(`${getApiBase()}/servidores`, servidor);
+        console.log('Creando nuevo servidor...');
+        // Eliminar el id si es undefined para evitar problemas
+        const { id, ...servidorSinId } = servidor;
+        console.log('Datos a enviar:', servidorSinId);
+        const response = await axios.post(`${getApiBase()}/servidores`, servidorSinId);
+        console.log('Servidor creado:', response.data);
       }
       cargarServidores();
       setMostrarFormulario(false);
       setServidorSeleccionado(null);
-    } catch (error) {
-      console.error('Error al guardar servidor:', error);
+    } catch (error: any) {
+      console.error('Error completo al guardar servidor:', error);
+      console.error('Respuesta del servidor:', error.response?.data);
+      console.error('Estado HTTP:', error.response?.status);
+      
+      let mensajeError = 'Error al guardar el servidor.';
+      if (error.response?.data?.error) {
+        mensajeError += ` ${error.response.data.error}`;
+      } else if (error.response?.data?.message) {
+        mensajeError += ` ${error.response.data.message}`;
+      } else if (error.message) {
+        mensajeError += ` ${error.message}`;
+      }
+      
+      alert(mensajeError);
     }
   };
 

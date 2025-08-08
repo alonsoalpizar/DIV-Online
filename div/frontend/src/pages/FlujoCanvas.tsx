@@ -443,50 +443,55 @@ if (esLineaErrorCondicion && targetNode) {
 };
 
 
+  // Detectar si hay algún modal abierto
+  const hayModalAbierto = nodoEditando || edgeEditando || erroresValidacion;
+
   // --- Render ---
   return (
     <div style={{ height: "100vh" }}>
-      {/* Barra superior */}
-      <div style={{ 
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: "10px", 
-        display: 'flex', 
-        gap: '10px', 
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e0e0e0',
-        zIndex: 10000,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-      }}>
-        <h2>🧩 Diseñando Proceso: {nombreProceso}</h2>
-        <button
-          onClick={() => {
-            const errores = validarFlujo(nodes, edges);
-            if (errores.some(e => e.tipo === 'error')) {
-              alert("❌ No se puede guardar. Hay errores en el flujo.");
-              setErroresValidacion(errores);
-              return;
-            }
-            if (errores.length > 0) {
-              const continuar = confirm("⚠️ Existen advertencias. ¿Desea guardar de todas formas?");
-              if (!continuar) {
+      {/* Barra superior - Solo visible cuando no hay modales */}
+      {!hayModalAbierto && (
+        <div style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: "10px", 
+          display: 'flex', 
+          gap: '10px', 
+          alignItems: 'center',
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e0e0e0',
+          zIndex: 1000,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          <h2>🧩 Diseñando Proceso: {nombreProceso}</h2>
+          <button
+            onClick={() => {
+              const errores = validarFlujo(nodes, edges);
+              if (errores.some(e => e.tipo === 'error')) {
+                alert("❌ No se puede guardar. Hay errores en el flujo.");
                 setErroresValidacion(errores);
                 return;
               }
-            }
-            guardarFlujo();
-          }}
-        >
-          💾 Guardar Flujo
-        </button>
-        <button onClick={() => setErroresValidacion(validarFlujo(nodes, edges))}>
-          🔍 Validar Flujo
-        </button>
-        <button onClick={() => navigate("/procesos")}>⬅️ Salir</button>
-      </div>
+              if (errores.length > 0) {
+                const continuar = confirm("⚠️ Existen advertencias. ¿Desea guardar de todas formas?");
+                if (!continuar) {
+                  setErroresValidacion(errores);
+                  return;
+                }
+              }
+              guardarFlujo();
+            }}
+          >
+            💾 Guardar Flujo
+          </button>
+          <button onClick={() => setErroresValidacion(validarFlujo(nodes, edges))}>
+            🔍 Validar Flujo
+          </button>
+          <button onClick={() => navigate("/procesos")}>⬅️ Salir</button>
+        </div>
+      )}
 
       {/* Panel lateral de objetos */}
       <PanelObjetos />
@@ -495,7 +500,7 @@ if (esLineaErrorCondicion && targetNode) {
       <div tabIndex={0} style={{ 
         height: "100vh", 
         outline: "none",
-        paddingTop: "70px" // Espacio para la barra superior fija
+        paddingTop: hayModalAbierto ? "0px" : "70px" // Espacio dinámico según el topbar
       }}>
         <ReactFlow
           nodes={nodes}
@@ -805,7 +810,12 @@ if (esLineaErrorCondicion && targetNode) {
           segmentosFijos={nodoEditando.data.segmentosFijos || []}
           camposUnir={nodoEditando.data.camposUnir || []}
           parametrosSalida={nodoEditando.data.parametrosSalida || []}
-          onGuardar={(nuevoLabel, modo, entrada, salida, modoParseo, delim, sep, segmentos, campos, salidaCampos) => {
+          longitudRegistro={nodoEditando.data.longitudRegistro}
+          campoMultiple={nodoEditando.data.campoMultiple}
+          codificacion={nodoEditando.data.codificacion}
+          prefijo={nodoEditando.data.prefijo}
+          sufijo={nodoEditando.data.sufijo}
+          onGuardar={(nuevoLabel, modo, entrada, salida, modoParseo, delim, sep, segmentos, campos, salidaCampos, codificacion, prefijo, sufijo, longitudRegistro, campoMultiple) => {
             setNodes((nds) =>
               nds.map((n) =>
                 n.id === nodoEditando.id
@@ -825,7 +835,12 @@ if (esLineaErrorCondicion && targetNode) {
                         parametrosEntrada: modo === 'unir' ? campos : [],
                         parametrosSalida: modo === 'descomponer'
                           ? salidaCampos
-                          : [{ nombre: salida, tipo: 'string' }]
+                          : [{ nombre: salida, tipo: 'string' }],
+                        codificacion: codificacion,
+                        prefijo: prefijo,
+                        sufijo: sufijo,
+                        longitudRegistro: longitudRegistro,
+                        campoMultiple: campoMultiple
                       }
                     }
                   : n

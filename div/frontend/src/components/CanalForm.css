@@ -1,5 +1,5 @@
-/* Formulario de Servidor */
-.servidor-form {
+/* Formulario de Canal */
+.canal-form {
   background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-xl);
@@ -10,8 +10,8 @@
 }
 
 /* Header */
-.servidor-form-header {
-  background: linear-gradient(135deg, var(--purple-600), var(--purple-700));
+.canal-form-header {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
   padding: var(--space-6);
   display: flex;
   justify-content: space-between;
@@ -25,21 +25,36 @@
   gap: var(--space-4);
 }
 
-.servidor-icon {
+.channel-icon {
   font-size: 2.5rem;
   padding: var(--space-3);
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.2);
+}
+
+.channel-icon.rest {
   color: var(--white);
 }
 
-.servidor-form-header h2 {
+.channel-icon.soap {
+  color: var(--white);
+}
+
+.channel-icon.file {
+  color: var(--white);
+}
+
+.channel-icon.default {
+  color: var(--white);
+}
+
+.canal-form-header h2 {
   font-size: var(--text-2xl);
   font-weight: 700;
   margin: 0;
 }
 
-.servidor-form-header p {
+.canal-form-header p {
   font-size: var(--text-base);
   margin: var(--space-1) 0 0 0;
   opacity: 0.9;
@@ -65,7 +80,7 @@
 }
 
 /* Body */
-.servidor-form-body {
+.canal-form-body {
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
@@ -85,8 +100,35 @@
   font-weight: 600;
   margin: 0 0 var(--space-4) 0;
   color: var(--gray-800);
-  border-bottom: 2px solid var(--purple-100);
+  border-bottom: 2px solid var(--blue-100);
   padding-bottom: var(--space-2);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.btn-docs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--blue-50);
+  color: var(--blue-700);
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.btn-docs:hover {
+  background: var(--blue-100);
+  border-color: var(--blue-300);
 }
 
 /* Filas del formulario */
@@ -127,8 +169,8 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--purple-400);
-  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+  border-color: var(--blue-400);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form-group input:disabled {
@@ -138,7 +180,7 @@
 }
 
 /* Input group con botón */
-.codigo-input-group {
+.input-group {
   display: flex;
   align-items: stretch;
   background: var(--white);
@@ -147,17 +189,17 @@
   overflow: hidden;
 }
 
-.codigo-input-group input {
+.input-group input {
   flex: 1;
   border: none;
   border-radius: 0;
 }
 
-.codigo-input-group input:focus {
+.input-group input:focus {
   box-shadow: none;
 }
 
-.btn-generar-codigo {
+.btn-generate {
   background: var(--gray-50);
   border: none;
   border-left: 1px solid var(--gray-300);
@@ -170,12 +212,12 @@
   justify-content: center;
 }
 
-.btn-generar-codigo:hover:not(:disabled) {
-  background: var(--purple-50);
-  color: var(--purple-600);
+.btn-generate:hover:not(:disabled) {
+  background: var(--blue-50);
+  color: var(--blue-600);
 }
 
-.btn-generar-codigo:disabled {
+.btn-generate:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -255,8 +297,42 @@
   border-radius: var(--radius-md);
 }
 
+/* Vista previa */
+.channel-preview {
+  background: var(--blue-25);
+  border: 1px solid var(--blue-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.preview-info {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.preview-item strong {
+  color: var(--gray-800);
+  min-width: 80px;
+}
+
+.preview-item code {
+  background: var(--white);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  color: var(--blue-700);
+  border: 1px solid var(--blue-200);
+}
+
 /* Footer */
-.servidor-form-footer {
+.canal-form-footer {
   background: var(--gray-50);
   border-top: 1px solid var(--gray-200);
   padding: var(--space-4) var(--space-6);
@@ -289,31 +365,23 @@
 }
 
 .btn-primary {
-  background: var(--purple-600);
+  background: var(--blue-600);
   color: var(--white);
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--purple-700);
+.btn-primary:hover {
+  background: var(--blue-700);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
-.btn-primary:disabled {
-  background: var(--gray-300);
-  color: var(--gray-500);
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
-  .servidor-form {
+  .canal-form {
     margin: var(--space-4);
   }
 
-  .servidor-form-header {
+  .canal-form-header {
     flex-direction: column;
     gap: var(--space-4);
     text-align: center;
@@ -324,7 +392,7 @@
     text-align: center;
   }
 
-  .servidor-form-body {
+  .canal-form-body {
     padding: var(--space-4);
   }
 
@@ -337,28 +405,34 @@
     gap: var(--space-3);
   }
 
-  .servidor-form-footer {
+  .section-header {
+    flex-direction: column;
+    gap: var(--space-2);
+    align-items: flex-start;
+  }
+
+  .canal-form-footer {
     flex-direction: column;
     padding: var(--space-4);
   }
 
-  .servidor-form-footer .btn {
+  .canal-form-footer .btn {
     width: 100%;
     justify-content: center;
   }
 }
 
 @media (max-width: 480px) {
-  .servidor-form {
+  .canal-form {
     margin: var(--space-2);
     border-radius: var(--radius-md);
   }
 
-  .servidor-form-header {
+  .canal-form-header {
     padding: var(--space-4);
   }
 
-  .servidor-form-body {
+  .canal-form-body {
     padding: var(--space-3);
     gap: var(--space-4);
   }
@@ -367,12 +441,12 @@
     padding: var(--space-3);
   }
 
-  .servidor-icon {
+  .channel-icon {
     font-size: 2rem;
     padding: var(--space-2);
   }
 
-  .servidor-form-header h2 {
+  .canal-form-header h2 {
     font-size: var(--text-xl);
   }
 }

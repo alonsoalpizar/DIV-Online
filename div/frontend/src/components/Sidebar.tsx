@@ -6,7 +6,7 @@ import '../styles/sidebar.css';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { counts, loading } = useSystemCounts();
+  const { counts } = useSystemCounts();
 
   const getNavItems = () => [
     { to: '/', label: 'Inicio', icon: <FaHome />, badge: null },
@@ -14,37 +14,37 @@ const Sidebar = () => {
       to: '/servidores', 
       label: 'Servidores', 
       icon: <FaServer />, 
-      badge: loading ? '...' : (counts.servidores > 0 ? counts.servidores.toString() : null)
+      badge: counts.servidores > 0 ? counts.servidores.toString() : null
     },
     { 
       to: '/canales', 
       label: 'Canales', 
       icon: <FaLink />, 
-      badge: loading ? '...' : (counts.canales > 0 ? counts.canales.toString() : null)
+      badge: counts.canales > 0 ? counts.canales.toString() : null
     },
     { 
       to: '/procesos', 
       label: 'Procesos', 
       icon: <FaCogs />, 
-      badge: loading ? '...' : (counts.procesos > 0 ? counts.procesos.toString() : null)
+      badge: counts.procesos > 0 ? counts.procesos.toString() : null
     },
     { 
       to: '/tareas-programadas', 
       label: 'Tareas Programadas', 
       icon: <FaClock />, 
-      badge: loading ? '...' : (counts.tareas > 0 ? counts.tareas.toString() : null)
+      badge: counts.tareas > 0 ? counts.tareas.toString() : null
     },
     { 
       to: '/parametros', 
       label: 'Parámetros', 
       icon: <FaFileAlt />, 
-      badge: loading ? '...' : (counts.parametros > 0 ? counts.parametros.toString() : null)
+      badge: counts.parametros > 0 ? counts.parametros.toString() : null
     },
     { 
       to: '/tablas', 
       label: 'Tablas', 
       icon: <FaTable />, 
-      badge: loading ? '...' : (counts.tablas > 0 ? counts.tablas.toString() : null)
+      badge: counts.tablas > 0 ? counts.tablas.toString() : null
     },
     { to: '/configuracion', label: 'Configuración', icon: <FaTools />, badge: null },
   ];
@@ -73,7 +73,7 @@ const Sidebar = () => {
             </div>
             <span className="sidebar-item-label">{item.label}</span>
             {item.badge && (
-              <span className={`sidebar-item-badge ${loading ? 'loading' : ''}`}>
+              <span className="sidebar-item-badge">
                 {item.badge}
               </span>
             )}

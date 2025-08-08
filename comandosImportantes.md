@@ -24,7 +24,7 @@ journalctl -u div-backend-motor.service -f
 
 Compilar el front-end para que se vean cambios en pagina
 
-cd div/frontend/npm run build 
+cd div/frontend/S 
 
 Iniciar el backend Motor manualmente para debug
 /opt/BackendMotor# go run cmd/server/main.go 

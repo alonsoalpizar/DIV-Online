@@ -27,9 +27,15 @@ export const getApiBase = (): string => {
 export const getApiBase = (): string => {
   const config = getConfiguracion();
   if (config?.urlBase) {
+    console.log('📍 URL Base configurada:', config.urlBase);
     return config.urlBase;
   } else {
-    console.warn('⚠️ No hay configuración definida. Usando fallback localhost.');
+    console.warn('⚠️ No hay configuración definida. Usando fallback.');
+    // En producción, usar /api a través de Nginx
+    if (window.location.hostname === '173.249.49.235') {
+      return 'http://173.249.49.235/api';
+    }
+    // En desarrollo, conectar directamente al backend
     return 'http://localhost:30000';
   }
 };

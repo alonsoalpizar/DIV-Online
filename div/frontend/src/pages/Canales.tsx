@@ -4,6 +4,7 @@ import { Canal } from '../types/canal';
 import CanalForm from '../components/CanalForm';
 import CanalList from '../components/CanalList';
 import AsignarProcesosACanal from '../components/AsignarProcesosACanal';
+import Modal from '../components/Modal';
 import { FaPlus, FaLink, FaSearch, FaFilter } from 'react-icons/fa';
 import { getApiBase } from '../utils/configuracion';
 
@@ -92,21 +93,6 @@ const Canales = () => {
     cargarCanales();
   }, []);
 
-  if (mostrarFormulario) {
-    return (
-      <div className="page-container">
-        <CanalForm
-          canal={canalSeleccionado}
-          onGuardar={guardarCanal}
-          onCancelar={() => {
-            setMostrarFormulario(false);
-            setCanalSeleccionado(null);
-          }}
-        />
-      </div>
-    );
-  }
-
   if (canalParaAsignar) {
     return (
       <div className="page-container">
@@ -174,12 +160,7 @@ const Canales = () => {
             onChange={(e) => filtrarCanales(e.target.value)}
           />
         </div>
-        <div className="filter-actions">
-          <button className="btn btn-outline btn-sm">
-            <FaFilter />
-            Filtros
-          </button>
-        </div>
+       
       </div>
 
       {/* Content */}
@@ -207,6 +188,18 @@ const Canales = () => {
           </div>
         )}
       </div>
+
+      {/* Modal para formulario de canal */}
+      <Modal isOpen={mostrarFormulario} onClose={() => setMostrarFormulario(false)}>
+        <CanalForm
+          canal={canalSeleccionado}
+          onGuardar={guardarCanal}
+          onCancelar={() => {
+            setMostrarFormulario(false);
+            setCanalSeleccionado(null);
+          }}
+        />
+      </Modal>
     </div>
   );
 };

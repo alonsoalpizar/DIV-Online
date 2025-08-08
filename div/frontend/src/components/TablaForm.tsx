@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Tabla, CampoTabla } from '../types/tabla';
+import { FaTable, FaTimes, FaPlus, FaDatabase, FaKey } from 'react-icons/fa';
+import './TablaForm.css';
 
 interface Props {
   tabla?: Tabla | null;
@@ -97,86 +99,164 @@ const TablaForm: React.FC<Props> = ({ tabla, onGuardar, onCancelar }) => {
   };
 
   return (
-    <div className="form-container">
-      <h2>{tabla ? 'Editar Tabla' : 'Nueva Tabla'}</h2>
-      
-      <div className="form-grid">
-        <label>Nombre:</label>
-        <input value={nombre} onChange={e => setNombre(e.target.value)} />
-      </div>
-
-      <div className="config-section">
-        <h4>Campos</h4>
-        <button onClick={agregarCampo}>➕ Agregar Campo</button>
-        {campos.map((campo, i) => (
-          <div key={i} className="config-row">
-            <input
-              placeholder="Nombre"
-              value={campo.nombre}
-              onChange={e => actualizarCampo(i, { ...campo, nombre: e.target.value })}
-            />
-            <select
-              value={campo.tipo}
-              onChange={e => actualizarCampo(i, { ...campo, tipo: e.target.value })}
-            >
-              <option value="string">string</option>
-              <option value="int">int</option>
-              <option value="bool">bool</option>
-            </select>
-            <button onClick={() => eliminarCampo(i)}>❌</button>
+    <div className="tabla-form">
+      {/* Header */}
+      <div className="tabla-form-header">
+        <div className="form-title-section">
+          <FaTable className="tabla-icon" />
+          <div>
+            <h2>{tabla ? 'Editar Tabla' : 'Nueva Tabla'}</h2>
+            <p>Define esquemas y datos para tablas dinámicas</p>
           </div>
-        ))}
+        </div>
+        <button className="btn-close" onClick={onCancelar}>
+          <FaTimes />
+        </button>
       </div>
 
-      {campos.length > 0 && (
-        <div className="config-section">
-          <h4>Registros</h4>
-          <button onClick={agregarRegistro}>➕ Agregar Registro</button>
-          <table>
-            <thead>
-              {campos.map((c, i) => (
-  <th key={i}>
-    {c.nombre} {i === 0 && <span title="Campo clave">🔑</span>}
-  </th>
-))}
-              <tr>
-                {campos.map((c, i) => <th key={i}>{c.nombre}</th>)}
-                <th>❌</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datos.map((fila, rowIndex) => (
-                <tr key={rowIndex}>
-                  {campos.map((campo, colIndex) => (
-                    <td key={colIndex}>
-                      {campo.tipo === 'bool' ? (
-                        <input
-                          type="checkbox"
-                          checked={!!fila[campo.nombre]}
-                          onChange={e => actualizarDato(rowIndex, campo.nombre, e.target.checked)}
-                        />
-                      ) : (
-                        <input
-                          type={campo.tipo === 'int' ? 'number' : 'text'}
-                          value={fila[campo.nombre]}
-                          onChange={e => actualizarDato(rowIndex, campo.nombre, campo.tipo === 'int' ? parseInt(e.target.value) || 0 : e.target.value)}
-                        />
-                      )}
-                    </td>
-                  ))}
-                  <td>
-                    <button onClick={() => eliminarRegistro(rowIndex)}>❌</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Form Body */}
+      <div className="tabla-form-body">
+        {/* Información Básica */}
+        <div className="form-section">
+          <h3><FaDatabase /> Información Básica</h3>
+          
+          <div className="form-group">
+            <label>Nombre de la Tabla:</label>
+            <input 
+              value={nombre} 
+              onChange={e => setNombre(e.target.value)}
+              placeholder="usuarios, productos, configuracion..."
+            />
+          </div>
         </div>
-      )}
 
-      <div className="form-actions">
-        <button onClick={handleGuardar}>💾 Guardar</button>
-        <button onClick={onCancelar}>Cancelar</button>
+        {/* Definición de Campos */}
+        <div className="form-section">
+          <div className="section-header">
+            <h3><FaKey /> Esquema de Campos</h3>
+            <button onClick={agregarCampo} className="btn-add">
+              <FaPlus /> Agregar Campo
+            </button>
+          </div>
+          
+          {campos.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📋</div>
+              <p>No hay campos definidos. Agregue al menos un campo para continuar.</p>
+            </div>
+          ) : (
+            <div className="campos-grid">
+              {campos.map((campo, i) => (
+                <div key={i} className="campo-row">
+                  <input
+                    placeholder="Nombre del campo"
+                    value={campo.nombre}
+                    onChange={e => actualizarCampo(i, { ...campo, nombre: e.target.value })}
+                  />
+                  <select
+                    value={campo.tipo}
+                    onChange={e => actualizarCampo(i, { ...campo, tipo: e.target.value })}
+                  >
+                    <option value="string">Texto</option>
+                    <option value="int">Número</option>
+                    <option value="bool">Booleano</option>
+                  </select>
+                  <button 
+                    onClick={() => eliminarCampo(i)}
+                    className="btn-remove"
+                    title="Eliminar campo"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {campos.length > 0 && (
+            <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-sm)', color: 'var(--gray-600)' }}>
+              <FaKey style={{ marginRight: 'var(--space-1)', color: 'var(--yellow-600)' }} />
+              El primer campo actúa como clave primaria y no puede tener valores duplicados
+            </div>
+          )}
+        </div>
+
+        {/* Registros de Datos */}
+        {campos.length > 0 && (
+          <div className="form-section">
+            <div className="section-header">
+              <h3><FaDatabase /> Registros de Datos</h3>
+              <button onClick={agregarRegistro} className="btn-add">
+                <FaPlus /> Agregar Registro
+              </button>
+            </div>
+            
+            {datos.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-state-icon">📊</div>
+                <p>No hay registros de datos. Agregue registros para poblar la tabla.</p>
+              </div>
+            ) : (
+              <div className="registros-section">
+                <table className="registros-table">
+                  <thead>
+                    <tr>
+                      {campos.map((c, i) => (
+                        <th key={i}>
+                          {c.nombre} {i === 0 && <FaKey className="key-indicator" title="Campo clave" />}
+                        </th>
+                      ))}
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {datos.map((fila, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {campos.map((campo, colIndex) => (
+                          <td key={colIndex}>
+                            {campo.tipo === 'bool' ? (
+                              <input
+                                type="checkbox"
+                                checked={!!fila[campo.nombre]}
+                                onChange={e => actualizarDato(rowIndex, campo.nombre, e.target.checked)}
+                              />
+                            ) : (
+                              <input
+                                type={campo.tipo === 'int' ? 'number' : 'text'}
+                                value={fila[campo.nombre] || ''}
+                                onChange={e => actualizarDato(rowIndex, campo.nombre, campo.tipo === 'int' ? parseInt(e.target.value) || 0 : e.target.value)}
+                                placeholder={campo.tipo === 'int' ? '0' : `Ingrese ${campo.nombre}`}
+                              />
+                            )}
+                          </td>
+                        ))}
+                        <td>
+                          <button 
+                            onClick={() => eliminarRegistro(rowIndex)}
+                            className="btn-remove"
+                            title="Eliminar registro"
+                          >
+                            <FaTimes />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="tabla-form-footer">
+        <button onClick={onCancelar} className="btn btn-secondary">
+          Cancelar
+        </button>
+        <button onClick={handleGuardar} className="btn btn-primary">
+          💾 Guardar Tabla
+        </button>
       </div>
     </div>
   );

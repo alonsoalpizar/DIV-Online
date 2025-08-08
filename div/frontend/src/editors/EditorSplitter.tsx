@@ -7,13 +7,20 @@ interface Props {
   modoOperacion: 'descomponer' | 'unir';
   campoEntrada: string;
   campoSalida: string;
-  modoParseo: 'delimitado' | 'plano' | 'plantilla';
+  modoParseo: 'delimitado' | 'plano' | 'plantilla' | 'bloques_repetidos';
   delimitadorPrincipal: string;
   separadorClaveValor: string;
   segmentosFijos: any[];
   camposUnir: Campo[];
   parametrosSalida: Campo[];
-  codificacion?: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8';
+  longitudRegistro?: number;
+  campoMultiple?: {
+    nombreObjeto?: string;
+    nombreArray?: string;
+    cantidadMinima?: number;
+    subcampos?: { nombre: string; inicio: number; longitud: number; tipo: string }[];
+  };
+  codificacion?: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8' | 'xml';
   prefijo?: string;
   sufijo?: string;
   onGuardar: (
@@ -21,15 +28,17 @@ interface Props {
     modoOperacion: 'descomponer' | 'unir',
     campoEntrada: string,
     campoSalida: string,
-    modoParseo: 'delimitado' | 'plano' | 'plantilla',
+    modoParseo: 'delimitado' | 'plano' | 'plantilla' | 'bloques_repetidos',
     delimitador: string,
     separador: string,
     segmentos: any[],
     camposUnir: Campo[],
     salida: Campo[],
-    codificacion: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8',
+    codificacion: 'none' | 'base64' | 'hex' | 'ascii' | 'utf8' | 'xml',
     prefijo: string,
-    sufijo: string
+    sufijo: string,
+    longitudRegistro?: number,
+    campoMultiple?: any
   ) => void;
   onCancelar: () => void;
 }
@@ -66,6 +75,8 @@ const EditorSplitter: React.FC<Props> = ({
   segmentosFijos,
   camposUnir,
   parametrosSalida,
+  longitudRegistro,
+  campoMultiple,
   codificacion = 'none',
   prefijo = '',
   sufijo = '',
@@ -81,7 +92,7 @@ const EditorSplitter: React.FC<Props> = ({
   const [delimitador, setDelimitador] = useState(delimitadorPrincipal || '|');
   const [separador, setSeparador] = useState(separadorClaveValor || '=');
   const [tramaEjemplo, setTramaEjemplo] = useState("codigo=123|cliente=Alonso|monto=5000");
-  const [codificacionLocal, setCodificacionLocal] = useState<'none' | 'base64' | 'hex' | 'ascii' | 'utf8'>(codificacion);
+  const [codificacionLocal, setCodificacionLocal] = useState<'none' | 'base64' | 'hex' | 'ascii' | 'utf8' | 'xml'>(codificacion);
   const [prefijoLocal, setPrefijoLocal] = useState(prefijo);
   const [sufijoLocal, setSufijoLocal] = useState(sufijo);
   const [vistaPrevia, setVistaPrevia] = useState('');
@@ -96,9 +107,23 @@ const EditorSplitter: React.FC<Props> = ({
   const [segmentosFijosLocal, setSegmentosFijosLocal] = useState<any[]>(
     Array.isArray(segmentosFijos) ? segmentosFijos : []
   );
+  
+  // --- Estados para bloques repetidos ---
+  const [longitudRegistroLocal, setLongitudRegistroLocal] = useState(longitudRegistro || 50);
+  const [campoMultipleLocal, setCampoMultipleLocal] = useState<{
+    nombreObjeto: string;
+    nombreArray: string;
+    cantidadMinima: number;
+    subcampos: { nombre: string; inicio: number; longitud: number; tipo: string }[];
+  }>({
+    nombreObjeto: campoMultiple?.nombreObjeto || 'Recibos',
+    nombreArray: campoMultiple?.nombreArray || 'recibo', 
+    cantidadMinima: campoMultiple?.cantidadMinima || 1,
+    subcampos: campoMultiple?.subcampos || []
+  });
 
   const tiposDisponibles = ['string', 'int', 'float', 'decimal', 'date', 'boolean'];
-  const codificacionesDisponibles = ['none', 'base64', 'hex', 'ascii', 'utf8'];
+  const codificacionesDisponibles = ['none', 'base64', 'hex', 'ascii', 'utf8', 'xml'];
 
   // Función para generar vista previa de trama
   const generarVistaPrevia = () => {
@@ -171,7 +196,7 @@ const EditorSplitter: React.FC<Props> = ({
   const agregarSegmento = () => {
     setSegmentosFijosLocal([
       ...segmentosFijosLocal,
-      { nombre: '', longitud: '', tipo: 'string', repeticiones: 1, repeticiones_minimas: 1 }
+      { nombre: '', longitud: '', tipo: 'string', repeticiones: 1, repeticiones_minimas: 1, tipo_estructura: 'simple' }
     ]);
   };
   const actualizarSegmento = (index: number, campo: Partial<any>) => {
@@ -188,89 +213,194 @@ const EditorSplitter: React.FC<Props> = ({
     setModo(modoOperacion);
   }, [modoOperacion]);
 
+  // --- Sincroniza campos de bloques repetidos desde props ---
+  useEffect(() => {
+    if (longitudRegistro !== undefined) {
+      setLongitudRegistroLocal(longitudRegistro);
+    }
+  }, [longitudRegistro]);
+
+  useEffect(() => {
+    if (campoMultiple) {
+      setCampoMultipleLocal({
+        nombreObjeto: campoMultiple.nombreObjeto || 'Recibos',
+        nombreArray: campoMultiple.nombreArray || 'recibo',
+        cantidadMinima: campoMultiple.cantidadMinima || 1,
+        subcampos: campoMultiple.subcampos || []
+      });
+    }
+  }, [campoMultiple]);
+
   // --- Determina los campos finales a mostrar ---
   const camposFinales = modo === 'descomponer' ? camposDetectados : camposManual;
 
   // --- Render ---
   return (
-    <div className="modal">
+    <div className="modal" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+      padding: '20px'
+    }}>
       <div
         className="modal-content"
         style={{
-          width: '860px',
-          maxWidth: '95vw',
-          padding: '20px',
-          overflowX: 'auto',
+          width: '90vw',
+          maxWidth: '1400px',
+          maxHeight: '90vh',
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          padding: '25px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           boxSizing: 'border-box',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+          position: 'relative'
         }}
       >
-        <h3>✂️ Configurar Splitter</h3>
+        <h3 style={{ marginTop: 0, marginBottom: '20px' }}>✂️ Configurar Splitter</h3>
 
         {/* Configuración general */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '10px', alignItems: 'center' }}>
-          <label>🔖 Nombre del nodo</label>
-          <input value={nuevoLabel} onChange={e => setNuevoLabel(e.target.value)} />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🔖 Nombre del nodo</label>
+            <input 
+              value={nuevoLabel} 
+              onChange={e => setNuevoLabel(e.target.value)}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            />
+          </div>
 
-          <label>⚙️ Modo de operación</label>
-          <select value={modo} onChange={e => setModo(e.target.value as any)}>
-            <option value="descomponer">Descomponer (parseo)</option>
-            <option value="unir">Unir (construcción)</option>
-          </select>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>⚙️ Modo de operación</label>
+            <select 
+              value={modo} 
+              onChange={e => setModo(e.target.value as any)}
+              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+            >
+              <option value="descomponer">Descomponer (parseo)</option>
+              <option value="unir">Unir (construcción)</option>
+            </select>
+          </div>
 
-          {/* Modo descomponer */}
-          {modo === 'descomponer' && (
-            <>
-              <label>📥 Campo de entrada</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <input value={entrada} readOnly style={{ background: '#f9f9f9', border: '1px solid #ccc' }} />
-                <span style={{ fontSize: '0.85em', color: '#666', alignSelf: 'center' }}>string</span>
+          {/* Tercera columna vacía para mantener el grid */}
+          <div></div>
+        </div>
+
+        {/* Modo descomponer */}
+        {modo === 'descomponer' && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📥 Campo de entrada</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input 
+                    value={entrada} 
+                    readOnly 
+                    style={{ flex: 1, padding: '8px', background: '#f9f9f9', border: '1px solid #ddd', borderRadius: '4px' }} 
+                  />
+                  <span style={{ fontSize: '0.85em', color: '#666', alignSelf: 'center' }}>string</span>
+                </div>
               </div>
 
-              <label>🧪 Tipo de parseo</label>
-              <select value={modoParseoLocal} onChange={e => setModoParseoLocal(e.target.value as any)}>
-                <option value="delimitado">Delimitado</option>
-                <option value="plano">Por posición fija</option>
-                <option value="plantilla">Plantilla TCP</option>
-              </select>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🧪 Tipo de parseo</label>
+                <select 
+                  value={modoParseoLocal} 
+                  onChange={e => setModoParseoLocal(e.target.value as any)}
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                >
+                  <option value="delimitado">Delimitado</option>
+                  <option value="plano">Por posición fija</option>
+                  <option value="plantilla">Plantilla TCP</option>
+                  <option value="bloques_repetidos">Bloques repetidos</option>
+                </select>
+              </div>
 
-              <label>🔒 Codificación</label>
-              <select value={codificacionLocal} onChange={e => setCodificacionLocal(e.target.value as any)}>
-                <option value="none">Sin codificación</option>
-                <option value="base64">Base64</option>
-                <option value="hex">Hexadecimal</option>
-                <option value="ascii">ASCII</option>
-                <option value="utf8">UTF-8</option>
-              </select>
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🔒 Codificación</label>
+                <select 
+                  value={codificacionLocal} 
+                  onChange={e => setCodificacionLocal(e.target.value as any)}
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                >
+                  <option value="none">Sin codificación</option>
+                  <option value="base64">Base64</option>
+                  <option value="hex">Hexadecimal</option>
+                  <option value="ascii">ASCII</option>
+                  <option value="utf8">UTF-8</option>
+                  <option value="xml">XML</option>
+                </select>
+              </div>
 
-              <label>🏷️ Prefijo de trama</label>
-              <input 
-                value={prefijoLocal} 
-                onChange={e => setPrefijoLocal(e.target.value)}
-                placeholder="Ej: STX, BEGIN_, etc."
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🏷️ Prefijo de trama</label>
+                <input 
+                  value={prefijoLocal} 
+                  onChange={e => setPrefijoLocal(e.target.value)}
+                  placeholder="Ej: STX, BEGIN_, etc."
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                />
+              </div>
 
-              <label>🏁 Sufijo de trama</label>
-              <input 
-                value={sufijoLocal} 
-                onChange={e => setSufijoLocal(e.target.value)}
-                placeholder="Ej: ETX, \n, \r\n, etc."
-              />
+              <div>
+                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🏁 Sufijo de trama</label>
+                <input 
+                  value={sufijoLocal} 
+                  onChange={e => setSufijoLocal(e.target.value)}
+                  placeholder="Ej: ETX, \n, \r\n, etc."
+                  style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                />
+              </div>
+            </div>
 
-              {/* Parseo delimitado */}
-              {modoParseoLocal === 'delimitado' && (
-                <>
-                  <label>🔗 Delimitador principal</label>
-                  <input value={delimitador} onChange={e => setDelimitador(e.target.value)} />
+            {/* Parseo delimitado */}
+            {modoParseoLocal === 'delimitado' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🔗 Delimitador principal</label>
+                  <input 
+                    value={delimitador} 
+                    onChange={e => setDelimitador(e.target.value)}
+                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
 
-                  <label>🧩 Separador clave-valor</label>
-                  <input value={separador} onChange={e => setSeparador(e.target.value)} />
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🧩 Separador clave-valor</label>
+                  <input 
+                    value={separador} 
+                    onChange={e => setSeparador(e.target.value)}
+                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
 
-                  <label>🧾 Trama de prueba</label>
-                  <input value={tramaEjemplo} onChange={e => setTramaEjemplo(e.target.value)} />
+                <div>
+                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🧾 Trama de prueba</label>
+                  <input 
+                    value={tramaEjemplo} 
+                    onChange={e => setTramaEjemplo(e.target.value)}
+                    style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                </div>
 
-                  <div /> <button onClick={parsearTrama}>🔍 Parsear</button>
-                </>
-              )}
+                <div style={{ gridColumn: 'span 3', textAlign: 'center' }}>
+                  <button 
+                    onClick={parsearTrama}
+                    style={{ padding: '10px 20px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  >
+                    🔍 Parsear Trama
+                  </button>
+                </div>
+              </div>
+            )}
 
               {/* Parseo por posición fija */}
               {modoParseoLocal === 'plano' && (
@@ -281,16 +411,17 @@ const EditorSplitter: React.FC<Props> = ({
                   </div>
                   
                   {/* Headers */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 40px', gap: '6px', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.85em', color: '#555' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 1.2fr 40px', gap: '6px', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.85em', color: '#555' }}>
                     <div>Campo</div>
                     <div>Tipo</div>
                     <div>Longitud (caracteres)</div>
                     <div>Rep. Máx</div>
                     <div>Rep. Mín</div>
+                    <div>Estructura</div>
                     <div></div>
                   </div>
                   {segmentosFijosLocal.map((seg, index) => (
-                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 40px', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.2fr 1fr 1fr 1.2fr 40px', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
                       <input 
                         placeholder="Nombre del campo" 
                         value={seg.nombre} 
@@ -312,7 +443,11 @@ const EditorSplitter: React.FC<Props> = ({
                         min="1"
                         max="100"
                         value={seg.repeticiones || 1} 
-                        onChange={e => actualizarSegmento(index, { repeticiones: Number(e.target.value) || 1 })} 
+                        onChange={e => {
+                          const newReps = Number(e.target.value) || 1;
+                          const newTipoEstructura = newReps <= 1 ? 'simple' : (seg.tipo_estructura === 'simple' ? 'object' : seg.tipo_estructura);
+                          actualizarSegmento(index, { repeticiones: newReps, tipo_estructura: newTipoEstructura });
+                        }} 
                       />
                       <input 
                         placeholder="1" 
@@ -321,6 +456,16 @@ const EditorSplitter: React.FC<Props> = ({
                         value={seg.repeticiones_minimas || 1} 
                         onChange={e => actualizarSegmento(index, { repeticiones_minimas: Number(e.target.value) || 1 })} 
                       />
+                      <select 
+                        value={seg.tipo_estructura || (seg.repeticiones <= 1 ? 'simple' : 'object')} 
+                        onChange={e => actualizarSegmento(index, { tipo_estructura: e.target.value })}
+                        disabled={!seg.repeticiones || seg.repeticiones <= 1}
+                        style={{ fontSize: '0.85em' }}
+                      >
+                        <option value="simple">Simple</option>
+                        <option value="object">Object</option>
+                        <option value="array">Array</option>
+                      </select>
                       <button onClick={() => eliminarSegmento(index)} style={{ background: '#ff4444', color: 'white', border: 'none', borderRadius: '3px', padding: '4px 6px' }}>
                         ❌
                       </button>
@@ -358,11 +503,20 @@ const EditorSplitter: React.FC<Props> = ({
                             <li key={i} style={{ marginBottom: '4px' }}>
                               {seg.repeticiones && seg.repeticiones > 1 ? (
                                 <>
-                                  <strong>{seg.nombre}</strong> (object con {seg.repeticiones} campos)
+                                  <strong>{seg.nombre}</strong> ({seg.tipo_estructura || 'object'} con {seg.repeticiones} elementos)
                                   <ul style={{ marginLeft: '15px', color: '#666', fontSize: '0.85em' }}>
-                                    <li>↳ Campos: {seg.nombre}1, {seg.nombre}2, {seg.nombre}3{seg.repeticiones > 3 ? '...' : ''}</li>
-                                    <li>↳ Cada campo: {seg.tipo}, {seg.longitud} caracteres</li>
-                                    <li>↳ Formato: campo:valor</li>
+                                    {seg.tipo_estructura === 'array' ? (
+                                      <>
+                                        <li>↳ Array de {seg.repeticiones} elementos</li>
+                                        <li>↳ Cada elemento: {seg.tipo}, {seg.longitud} caracteres</li>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <li>↳ Campos: {seg.nombre}1, {seg.nombre}2, {seg.nombre}3{seg.repeticiones > 3 ? '...' : ''}</li>
+                                        <li>↳ Cada campo: {seg.tipo}, {seg.longitud} caracteres</li>
+                                        <li>↳ Formato: campo:valor</li>
+                                      </>
+                                    )}
                                   </ul>
                                 </>
                               ) : (
@@ -381,80 +535,301 @@ const EditorSplitter: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Campos detectados */}
-              <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
-                <h4>🧾 Campos detectados o añadidos manualmente</h4>
-                {camposDetectados.map((campo, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '5px', marginBottom: '4px' }}>
-                    <input value={campo.nombre} onChange={e => actualizarCampoDetectado(i, { nombre: e.target.value })} />
-                    <select value={campo.tipo} onChange={e => actualizarCampoDetectado(i, { tipo: e.target.value })}>
-                      {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <button onClick={() => eliminarCampoDetectado(i)}>❌</button>
+              {/* Parseo de bloques repetidos */}
+              {modoParseoLocal === 'bloques_repetidos' && (
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <h4>🔁 Configuración de bloques repetidos</h4>
+                  <div style={{ marginBottom: '10px', fontSize: '0.9em', color: '#666' }}>
+                    📌 Define la estructura de un bloque que se repite múltiples veces en la trama
                   </div>
-                ))}
-                <button onClick={agregarCampoDetectado}>➕ Agregar campo</button>
-              </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📦 Objeto padre</label>
+                      <input 
+                        value={campoMultipleLocal.nombreObjeto}
+                        onChange={e => setCampoMultipleLocal({...campoMultipleLocal, nombreObjeto: e.target.value})}
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                        placeholder="Recibos"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🏷️ Nombre del array</label>
+                      <input 
+                        value={campoMultipleLocal.nombreArray}
+                        onChange={e => setCampoMultipleLocal({...campoMultipleLocal, nombreArray: e.target.value})}
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                        placeholder="recibo"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📏 Longitud por bloque</label>
+                      <input 
+                        type="number"
+                        value={longitudRegistroLocal}
+                        onChange={e => setLongitudRegistroLocal(Number(e.target.value))}
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                        placeholder="55"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📋 Trama de ejemplo</label>
+                      <input 
+                        value="0020250700000000000713888520250802001000240100514697230"
+                        readOnly
+                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd', background: '#f9f9f9' }}
+                      />
+                    </div>
+                  </div>
+
+                  <h5>📊 Subcampos del bloque:</h5>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 40px', gap: '6px', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.85em', color: '#555' }}>
+                    <div>Nombre</div>
+                    <div>Posición</div>
+                    <div>Longitud</div>
+                    <div>Tipo</div>
+                    <div></div>
+                  </div>
+                  
+                  {campoMultipleLocal.subcampos.map((subcampo, index) => (
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 40px', gap: '6px', marginBottom: '6px', alignItems: 'center' }}>
+                      <input 
+                        placeholder="nombre" 
+                        value={subcampo.nombre}
+                        onChange={e => {
+                          const nuevos = [...campoMultipleLocal.subcampos];
+                          nuevos[index] = { ...nuevos[index], nombre: e.target.value };
+                          setCampoMultipleLocal({...campoMultipleLocal, subcampos: nuevos});
+                        }}
+                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                      <input 
+                        type="number"
+                        placeholder="0"
+                        value={subcampo.inicio}
+                        onChange={e => {
+                          const nuevos = [...campoMultipleLocal.subcampos];
+                          nuevos[index] = { ...nuevos[index], inicio: Number(e.target.value) };
+                          setCampoMultipleLocal({...campoMultipleLocal, subcampos: nuevos});
+                        }}
+                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                      <input 
+                        type="number"
+                        placeholder="10"
+                        value={subcampo.longitud}
+                        onChange={e => {
+                          const nuevos = [...campoMultipleLocal.subcampos];
+                          nuevos[index] = { ...nuevos[index], longitud: Number(e.target.value) };
+                          setCampoMultipleLocal({...campoMultipleLocal, subcampos: nuevos});
+                        }}
+                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      />
+                      <select 
+                        value={subcampo.tipo}
+                        onChange={e => {
+                          const nuevos = [...campoMultipleLocal.subcampos];
+                          nuevos[index] = { ...nuevos[index], tipo: e.target.value };
+                          setCampoMultipleLocal({...campoMultipleLocal, subcampos: nuevos});
+                        }}
+                        style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                      >
+                        {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <button 
+                        onClick={() => {
+                          const nuevos = campoMultipleLocal.subcampos.filter((_, i) => i !== index);
+                          setCampoMultipleLocal({...campoMultipleLocal, subcampos: nuevos});
+                        }}
+                        style={{ background: '#ff4444', color: 'white', border: 'none', borderRadius: '3px', padding: '4px 6px' }}
+                      >
+                        ❌
+                      </button>
+                    </div>
+                  ))}
+                  
+                  <button 
+                    onClick={() => {
+                      setCampoMultipleLocal({
+                        ...campoMultipleLocal,
+                        subcampos: [...campoMultipleLocal.subcampos, { nombre: '', inicio: 0, longitud: 1, tipo: 'string' }]
+                      });
+                    }}
+                    style={{ marginTop: '8px', padding: '6px 12px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >
+                    ➕ Agregar subcampo
+                  </button>
+                </div>
+              )}
+
+              {/* Campos detectados */}
+              {modoParseoLocal !== 'bloques_repetidos' && (
+                <div style={{ gridColumn: '1 / -1', marginTop: '10px' }}>
+                  <h4>🧾 Campos detectados o añadidos manualmente</h4>
+                  {camposDetectados.map((campo, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '5px', marginBottom: '4px' }}>
+                      <input value={campo.nombre} onChange={e => actualizarCampoDetectado(i, { nombre: e.target.value })} />
+                      <select value={campo.tipo} onChange={e => actualizarCampoDetectado(i, { tipo: e.target.value })}>
+                        {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <button onClick={() => eliminarCampoDetectado(i)}>❌</button>
+                    </div>
+                  ))}
+                  <button onClick={agregarCampoDetectado}>➕ Agregar campo</button>
+                </div>
+              )}
+
+              {/* Vista previa de estructura para bloques repetidos */}
+              {modoParseoLocal === 'bloques_repetidos' && campoMultipleLocal.subcampos.length > 0 && (
+                <div style={{ gridColumn: '1 / -1', marginTop: '15px' }}>
+                  <h4>🧾 Estructura de campos resultante</h4>
+                  <div style={{ 
+                    padding: '15px', 
+                    background: '#f9f9f9', 
+                    border: '1px solid #ddd', 
+                    borderRadius: '6px',
+                    fontFamily: 'monospace',
+                    fontSize: '0.9em'
+                  }}>
+                    <div style={{ marginBottom: '10px', fontWeight: 'bold', color: '#0066cc' }}>
+                      📦 {campoMultipleLocal.nombreObjeto}: <span style={{ color: '#008000' }}>object</span>
+                    </div>
+                    <div style={{ marginLeft: '20px', borderLeft: '2px solid #0066cc', paddingLeft: '15px', marginBottom: '10px' }}>
+                      <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#0066cc' }}>
+                        📋 {campoMultipleLocal.nombreArray}: <span style={{ color: '#008000' }}>array</span>
+                      </div>
+                      <div style={{ marginLeft: '20px', borderLeft: '2px solid #ddd', paddingLeft: '15px' }}>
+                        <div style={{ marginBottom: '8px', fontWeight: 'bold', color: '#666' }}>
+                          📄 Cada elemento contiene:
+                        </div>
+                      {campoMultipleLocal.subcampos.map((sub, index) => (
+                        <div key={index} style={{ 
+                          marginBottom: '4px', 
+                          padding: '4px 8px',
+                          background: 'white',
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '3px'
+                        }}>
+                          <span style={{ color: '#0066cc', fontWeight: 'bold' }}>
+                            {sub.nombre}
+                          </span>
+                          <span style={{ color: '#666' }}>: </span>
+                          <span style={{ color: '#008000' }}>{sub.tipo}</span>
+                          <span style={{ color: '#999', fontSize: '0.85em' }}>
+                            {' '}(pos: {sub.inicio}, len: {sub.longitud})
+                          </span>
+                        </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div style={{ 
+                      marginTop: '12px', 
+                      padding: '8px', 
+                      background: '#e8f4fd', 
+                      borderRadius: '4px',
+                      fontSize: '0.85em',
+                      color: '#0066cc'
+                    }}>
+                      💡 <strong>Resultado JSON:</strong> Objeto con array de elementos, cada uno con {campoMultipleLocal.subcampos.length} campos
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
 
-          {/* Modo unir */}
-          {modo === 'unir' && (
-            <>
-              <label>📤 Campo de salida</label>
+        {/* Modo unir */}
+        {modo === 'unir' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>📤 Campo de salida</label>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <input value={salida} onChange={e => setSalida(e.target.value)} />
+                <input 
+                  value={salida} 
+                  onChange={e => setSalida(e.target.value)}
+                  style={{ flex: 1, padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+                />
                 <span style={{ fontSize: '0.85em', color: '#666', alignSelf: 'center' }}>string</span>
               </div>
+            </div>
 
-              <label>🔒 Codificación de salida</label>
-              <select value={codificacionLocal} onChange={e => setCodificacionLocal(e.target.value as any)}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🔒 Codificación de salida</label>
+              <select 
+                value={codificacionLocal} 
+                onChange={e => setCodificacionLocal(e.target.value as any)}
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
+              >
                 <option value="none">Sin codificación</option>
                 <option value="base64">Base64</option>
                 <option value="hex">Hexadecimal</option>
                 <option value="ascii">ASCII</option>
                 <option value="utf8">UTF-8</option>
+                <option value="xml">XML</option>
               </select>
+            </div>
 
-              <label>🏷️ Prefijo de trama</label>
+            <div></div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🏷️ Prefijo de trama</label>
               <input 
                 value={prefijoLocal} 
                 onChange={e => setPrefijoLocal(e.target.value)}
                 placeholder="Ej: STX, BEGIN_, etc."
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
               />
+            </div>
 
-              <label>🏁 Sufijo de trama</label>
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>🏁 Sufijo de trama</label>
               <input 
                 value={sufijoLocal} 
                 onChange={e => setSufijoLocal(e.target.value)}
                 placeholder="Ej: ETX, \n, \r\n, etc."
+                style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
               />
+            </div>
 
-              <div style={{ gridColumn: '1 / -1' }}>
-                <h4>🔁 Campos de entrada (a construir)</h4>
-                {camposManual.map((campo, index) => (
-                  <div key={index} style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
-                    <input placeholder="nombre" value={campo.nombre} onChange={e => actualizarCampoManual(index, { nombre: e.target.value })} />
-                    <select value={campo.tipo} onChange={e => actualizarCampoManual(index, { tipo: e.target.value })}>
-                      {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <button onClick={() => eliminarCampoManual(index)}>❌</button>
-                  </div>
-                ))}
-                <button onClick={agregarCampoManual}>➕ Agregar campo</button>
-              </div>
-            </>
-          )}
-        </div>
+            <div style={{ gridColumn: 'span 3' }}>
+              <h4>🔁 Campos de entrada (a construir)</h4>
+              {camposManual.map((campo, index) => (
+                <div key={index} style={{ display: 'flex', gap: '5px', marginBottom: '5px' }}>
+                  <input 
+                    placeholder="nombre" 
+                    value={campo.nombre} 
+                    onChange={e => actualizarCampoManual(index, { nombre: e.target.value })}
+                    style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  />
+                  <select 
+                    value={campo.tipo} 
+                    onChange={e => actualizarCampoManual(index, { tipo: e.target.value })}
+                    style={{ padding: '6px', borderRadius: '4px', border: '1px solid #ddd' }}
+                  >
+                    {tiposDisponibles.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <button 
+                    onClick={() => eliminarCampoManual(index)}
+                    style={{ padding: '6px 8px', background: '#ff4444', color: 'white', border: 'none', borderRadius: '4px' }}
+                  >❌</button>
+                </div>
+              ))}
+              <button 
+                onClick={agregarCampoManual}
+                style={{ padding: '8px 16px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px' }}
+              >➕ Agregar campo</button>
+            </div>
+          </div>
+        )}
 
-        {/* Vista previa de campos finales */}
-        {camposFinales.length > 0 && (
+        {/* Vista previa de campos finales - Solo mostrar en modo unir */}
+        {modo === 'unir' && camposFinales.length > 0 && (
           <div style={{ marginTop: '20px' }}>
-            <h4>
-              {modo === 'descomponer'
-                ? '📌 Campos de salida:'
-                : '📥 Campos de entrada resultantes:'}
-            </h4>
+            <h4>📥 Campos de entrada resultantes:</h4>
             <ul>
               {camposFinales.map((c, i) => (
                 <li key={i} style={{ marginBottom: '8px' }}>
@@ -544,30 +919,111 @@ const EditorSplitter: React.FC<Props> = ({
                 const camposExpandidos: Campo[] = [];
                 segmentos.forEach(seg => {
                   const repeticiones = seg.repeticiones || 1;
-                  if (repeticiones === 1) {
-                    // Campo simple sin repeticiones
+                  const tipoEstructura = seg.tipo_estructura || (repeticiones <= 1 ? 'simple' : 'object');
+                  
+                  if (repeticiones === 1 || tipoEstructura === 'simple') {
+                    // Campo simple sin repeticiones o forzado como simple
                     camposExpandidos.push({
                       nombre: seg.nombre,
                       tipo: seg.tipo || 'string'
                     });
                   } else {
-                    // Campo padre con subcampos (array campo:valor)
-                    const subcampos: Campo[] = [];
-                    for (let i = 1; i <= repeticiones; i++) {
-                      subcampos.push({
-                        nombre: `${seg.nombre}${i}`, // Patrón: campo1, campo2, campo3...
-                        tipo: seg.tipo || 'string'
+                    if (tipoEstructura === 'array') {
+                      // Array de elementos del mismo tipo
+                      camposExpandidos.push({
+                        nombre: seg.nombre,
+                        tipo: 'array',
+                        subcampos: [{
+                          nombre: 'element',
+                          tipo: seg.tipo || 'string'
+                        }]
+                      });
+                    } else if (tipoEstructura === 'object') {
+                      // Object con campos numerados (campo1, campo2, etc.)
+                      const subcampos: Campo[] = [];
+                      for (let i = 1; i <= repeticiones; i++) {
+                        subcampos.push({
+                          nombre: `${seg.nombre}${i}`,
+                          tipo: seg.tipo || 'string'
+                        });
+                      }
+                      camposExpandidos.push({
+                        nombre: seg.nombre,
+                        tipo: 'object',
+                        subcampos: subcampos
                       });
                     }
-                    camposExpandidos.push({
-                      nombre: seg.nombre,
-                      tipo: 'object', // Tipo object para indicar estructura campo:valor
-                      subcampos: subcampos
-                    });
                   }
                 });
                 return camposExpandidos;
               };
+
+              // Para bloques repetidos, crear estructura jerárquica: objeto -> array -> elementos
+              const crearCampoBloquesRepetidos = (): Campo[] => {
+                if (campoMultipleLocal.subcampos.length === 0) return [];
+                
+                const subcamposArray: Campo[] = campoMultipleLocal.subcampos.map(sub => ({
+                  nombre: sub.nombre,
+                  tipo: sub.tipo
+                }));
+                
+                // Crear el array con sus subcampos
+                const campoArray: Campo = {
+                  nombre: campoMultipleLocal.nombreArray,
+                  tipo: 'array',
+                  subcampos: subcamposArray
+                };
+                
+                // Crear el objeto padre que contiene el array
+                return [{
+                  nombre: campoMultipleLocal.nombreObjeto,
+                  tipo: 'object',
+                  subcampos: [campoArray]
+                }];
+              };
+
+              // --- Limpiar campos según modo de parseo ---
+              const limpiarSegunModo = () => {
+                if (modoParseoLocal === 'plano') {
+                  return {
+                    delimitador: '',
+                    separador: '',
+                    segmentosFijos: segmentosFijosLocal,
+                    camposUnir: [],
+                    longitudRegistro: segmentosFijosLocal.reduce((acc, seg) => acc + (seg.longitud * (seg.repeticiones || 1)), 0),
+                    campoMultiple: { nombreObjeto: '', nombreArray: '', cantidadMinima: 1, subcampos: [] }
+                  };
+                } else if (modoParseoLocal === 'bloques_repetidos') {
+                  return {
+                    delimitador: '',
+                    separador: '',
+                    segmentosFijos: [],
+                    camposUnir: [],
+                    longitudRegistro: longitudRegistroLocal,
+                    campoMultiple: campoMultipleLocal
+                  };
+                } else if (modoParseoLocal === 'delimitado') {
+                  return {
+                    delimitador: delimitador,
+                    separador: separador,
+                    segmentosFijos: [],
+                    camposUnir: modo === 'unir' ? camposManual : [],
+                    longitudRegistro: 0,
+                    campoMultiple: { nombreObjeto: '', nombreArray: '', cantidadMinima: 1, subcampos: [] }
+                  };
+                } else {
+                  return {
+                    delimitador: delimitador,
+                    separador: separador,
+                    segmentosFijos: segmentosFijosLocal,
+                    camposUnir: camposManual,
+                    longitudRegistro: longitudRegistroLocal,
+                    campoMultiple: campoMultipleLocal
+                  };
+                }
+              };
+
+              const camposLimpios = limpiarSegunModo();
 
               onGuardar(
                 nuevoLabel,
@@ -575,18 +1031,22 @@ const EditorSplitter: React.FC<Props> = ({
                 entrada,
                 salida,
                 modoParseoLocal,
-                delimitador,
-                separador,
-                segmentosFijosLocal,
-                camposManual,
+                camposLimpios.delimitador,
+                camposLimpios.separador,
+                camposLimpios.segmentosFijos,
+                camposLimpios.camposUnir,
                 modo === 'descomponer'
                   ? (modoParseoLocal === 'plano'
                       ? expandirCamposConRepeticiones(segmentosFijosLocal)
-                      : camposDetectados)
+                      : modoParseoLocal === 'bloques_repetidos'
+                        ? crearCampoBloquesRepetidos()
+                        : camposDetectados)
                   : [{ nombre: salida, tipo: 'string' }],
                 codificacionLocal,
                 prefijoFinal,
-                sufijoFinal
+                sufijoFinal,
+                camposLimpios.longitudRegistro,
+                camposLimpios.campoMultiple
               );
             }}
           >

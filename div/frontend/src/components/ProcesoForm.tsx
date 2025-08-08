@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Proceso } from '../types/proceso';
 import { getApiBase } from '../utils/configuracion';
+import { FaCogs, FaTimes } from 'react-icons/fa';
+import './ProcesoForm.css';
 
 interface Props {
   proceso?: Proceso | null;
@@ -61,42 +63,73 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
   };
 
   return (
-    <div className="form-container">
-      <h2>{proceso ? 'Editar Proceso' : 'Nuevo Proceso'}</h2>
-      <div className="form-grid">
-        <label>Código:</label>
-        <div className="codigo-input-group">
-          <input 
-            value={codigo} 
-            onChange={e => setCodigo(e.target.value)}
-            placeholder="PROC-001"
-            disabled={generandoCodigo}
-          />
-          {!proceso && (
-            <button 
-              type="button"
-              className="btn-generar-codigo"
-              onClick={obtenerProximoCodigo}
-              disabled={generandoCodigo}
-              title="Generar código automático"
-            >
-              {generandoCodigo ? '⏳' : '🔄'}
-            </button>
-          )}
+    <div className="proceso-form">
+      {/* Header */}
+      <div className="proceso-form-header">
+        <div className="form-title-section">
+          <FaCogs className="proceso-icon" />
+          <div>
+            <h2>{proceso ? 'Editar Proceso' : 'Nuevo Proceso'}</h2>
+            <p>Configure un proceso de integración visual</p>
+          </div>
         </div>
-
-        <label>Nombre:</label>
-        <input value={nombre} onChange={e => setNombre(e.target.value)} />
-
-        <label>Descripción:</label>
-        <input value={descripcion} onChange={e => setDescripcion(e.target.value)} />
+        <button className="btn-close" onClick={onCancelar}>
+          <FaTimes />
+        </button>
       </div>
 
-      <div className="form-actions">
-        <button onClick={handleGuardar} disabled={generandoCodigo}>
-          {generandoCodigo ? '⏳ Generando...' : '💾 Guardar'}
+      {/* Form Body */}
+      <div className="proceso-form-body">
+        <div className="form-group">
+          <label>Código:</label>
+          <div className="codigo-input-group">
+            <input 
+              value={codigo} 
+              onChange={e => setCodigo(e.target.value)}
+              placeholder="PROC-001"
+              disabled={generandoCodigo}
+            />
+            {!proceso && (
+              <button 
+                type="button"
+                className="btn-generar-codigo"
+                onClick={obtenerProximoCodigo}
+                disabled={generandoCodigo}
+                title="Generar código automático"
+              >
+                {generandoCodigo ? '⏳' : '🔄'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Nombre:</label>
+          <input 
+            value={nombre} 
+            onChange={e => setNombre(e.target.value)}
+            placeholder="Nombre descriptivo del proceso"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Descripción:</label>
+          <input 
+            value={descripcion} 
+            onChange={e => setDescripcion(e.target.value)}
+            placeholder="Descripción opcional del proceso"
+          />
+        </div>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="proceso-form-footer">
+        <button onClick={onCancelar} className="btn btn-secondary">
+          Cancelar
         </button>
-        <button onClick={onCancelar}>Cancelar</button>
+        <button onClick={handleGuardar} disabled={generandoCodigo} className="btn btn-primary">
+          {generandoCodigo ? '⏳ Generando...' : '💾 Guardar Proceso'}
+        </button>
       </div>
     </div>
   );

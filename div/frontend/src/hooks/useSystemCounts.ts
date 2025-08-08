@@ -24,9 +24,12 @@ export const useSystemCounts = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCounts = async () => {
+  const fetchCounts = async (isInitial = false) => {
     try {
-      setLoading(true);
+      // Solo mostrar loading en la carga inicial
+      if (isInitial) {
+        setLoading(true);
+      }
       const baseUrl = getApiBase();
 
       // Hacer todas las peticiones en paralelo
@@ -60,18 +63,22 @@ export const useSystemCounts = () => {
       console.error('Error al obtener conteos:', err);
       setError('Error al cargar conteos');
     } finally {
-      setLoading(false);
+      // Solo quitar loading en la carga inicial
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchCounts();
+    fetchCounts(true); // Carga inicial con loading
     
-    // Actualizar conteos cada 30 segundos
-    const interval = setInterval(fetchCounts, 30000);
+    // Actualizar conteos cada 60 segundos (aumentado de 30)
+    // sin mostrar loading para evitar saltos visuales
+    const interval = setInterval(() => fetchCounts(false), 60000);
     
     return () => clearInterval(interval);
   }, []);
 
-  return { counts, loading, error, refresh: fetchCounts };
+  return { counts, loading, error, refresh: () => fetchCounts(false) };
 };

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Servidor } from '../types/servidor';
 import { getApiBase } from '../utils/configuracion';
 import { extrasPorTipoServidor } from '../hooks/configExtrasPorTipo';
+import { FaServer, FaTimes, FaPlus } from 'react-icons/fa';
 import './ServidorForm.css';
 
 interface Props {
@@ -21,7 +22,7 @@ const tiposAgrupados = {
 };
 
 const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
-  const [id, setId] = useState(servidor?.id || '');
+  const [id, setId] = useState(servidor?.id || undefined);
   const [codigo, setCodigo] = useState(servidor?.codigo || '');
   const [nombre, setNombre] = useState(servidor?.nombre || '');
   const [tipo, setTipo] = useState(servidor?.tipo || '');
@@ -52,7 +53,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
   useEffect(() => {
     if (servidor) {
       // Editando servidor existente
-      setId(servidor.id || '');
+      setId(servidor.id || undefined);
       setCodigo(servidor.codigo || '');
       setNombre(servidor.nombre || '');
       setTipo(servidor.tipo || '');
@@ -62,30 +63,58 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
       setClave(servidor.clave || '');
       setConfig(servidor.extras || {});
     } else {
-      // Nuevo servidor: generar código automático
+      // Nuevo servidor: limpiar el id y generar código automático
+      setId(undefined);
       obtenerProximoCodigo();
     }
   }, [servidor]);
 
   const handleGuardar = () => {
-    if (!codigo || !nombre || !tipo || !host || !puerto || !usuario || !clave) {
-      alert('Todos los campos son obligatorios.');
+    // Validación más detallada
+    const camposFaltantes = [];
+    if (!codigo) camposFaltantes.push('Código');
+    if (!nombre) camposFaltantes.push('Nombre');
+    if (!tipo) camposFaltantes.push('Tipo');
+    if (!host) camposFaltantes.push('Host');
+    if (!puerto) camposFaltantes.push('Puerto');
+    if (!usuario) camposFaltantes.push('Usuario');
+    if (!clave) camposFaltantes.push('Clave');
+    
+    if (camposFaltantes.length > 0) {
+      alert(`Los siguientes campos son obligatorios: ${camposFaltantes.join(', ')}`);
       return;
     }
 
-    const nuevoServidor: Servidor = {
-      id,
-      codigo,
-      nombre,
+    // Validar que el puerto sea un número válido
+    const puertoNumero = Number(puerto);
+    if (isNaN(puertoNumero) || puertoNumero <= 0 || puertoNumero > 65535) {
+      alert('El puerto debe ser un número válido entre 1 y 65535');
+      return;
+    }
+
+    const nuevoServidor: any = {
+      codigo: codigo.trim(),
+      nombre: nombre.trim(),
       tipo,
-      host,
-      puerto: Number(puerto),
-      usuario,
+      host: host.trim(),
+      puerto: puertoNumero,
+      usuario: usuario.trim(),
       clave,
-      fechaCreacion: servidor?.fechaCreacion || '',
-      extras,
+      extras: extras || {},
     };
 
+    // Solo agregar id si existe y no es vacío
+    if (id) {
+      nuevoServidor.id = id;
+      // Solo agregar fechaCreacion si ya existe y es válida
+      if (servidor?.fechaCreacion && servidor.fechaCreacion !== '') {
+        nuevoServidor.fechaCreacion = servidor.fechaCreacion;
+      }
+    }
+    // Para nuevos servidores, NO enviar fechaCreacion en absoluto
+    // El backend la generará automáticamente
+
+    console.log('Enviando servidor desde formulario:', nuevoServidor);
     onGuardar(nuevoServidor);
   };
 
@@ -118,126 +147,180 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
 
   return (
     <div className="servidor-form">
-      <h3>{servidor ? 'Editar Servidor' : 'Nuevo Servidor'}</h3>
-      
-      <div className="form-group">
-        <label>Código:</label>
-        <div className="codigo-input-group">
-          <input
-            type="text"
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            placeholder="SRV-001"
-            disabled={generandoCodigo}
-          />
-          {!servidor && (
-            <button 
-              type="button"
-              className="btn-generar-codigo"
-              onClick={obtenerProximoCodigo}
-              disabled={generandoCodigo}
-              title="Generar código automático"
-            >
-              {generandoCodigo ? '⏳' : '🔄'}
-            </button>
+      {/* Header */}
+      <div className="servidor-form-header">
+        <div className="form-title-section">
+          <FaServer className="servidor-icon" />
+          <div>
+            <h2>{servidor ? 'Editar Servidor' : 'Nuevo Servidor'}</h2>
+            <p>Configure un servidor para conexiones externas</p>
+          </div>
+        </div>
+        <button className="btn-close" onClick={onCancelar}>
+          <FaTimes />
+        </button>
+      </div>
+
+      {/* Form Body */}
+      <div className="servidor-form-body">
+        {/* Información Básica */}
+        <div className="form-section">
+          <h3>Información Básica</h3>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label>Código:</label>
+              <div className="codigo-input-group">
+                <input
+                  type="text"
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value)}
+                  placeholder="SRV-001"
+                  disabled={generandoCodigo}
+                />
+                {!servidor && (
+                  <button 
+                    type="button"
+                    className="btn-generar-codigo"
+                    onClick={obtenerProximoCodigo}
+                    disabled={generandoCodigo}
+                    title="Generar código automático"
+                  >
+                    {generandoCodigo ? '⏳' : '🔄'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Nombre:</label>
+              <input
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Nombre Servidor"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Tipo:</label>
+              <select value={tipo} onChange={(e) => handleTipoChange(e.target.value)}>
+                <option value="">Seleccione un tipo</option>
+                {Object.entries(tiposAgrupados).map(([grupo, tipos]) => (
+                  <optgroup key={grupo} label={grupo}>
+                    {tipos.map((tipoOpcion) => (
+                      <option key={tipoOpcion} value={tipoOpcion}>
+                        {tipoOpcion}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Configuración de Conexión */}
+        <div className="form-section">
+          <h3>Configuración de Conexión</h3>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label>Host:</label>
+              <input
+                type="text"
+                value={host}
+                onChange={(e) => setHost(e.target.value)}
+                placeholder="localhost, 192.168.1.100, servidor.empresa.com"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Puerto:</label>
+              <input
+                type="number"
+                value={puerto}
+                onChange={(e) => setPuerto(e.target.value)}
+                placeholder="1433, 3306, 5432..."
+                min="1"
+                max="65535"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Usuario:</label>
+              <input
+                type="text"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+                placeholder="Usuario de conexión"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Clave:</label>
+              <input
+                type="password"
+                value={clave}
+                onChange={(e) => setClave(e.target.value)}
+                placeholder="Contraseña"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Configuración Adicional */}
+        <div className="form-section">
+          <h3>Configuración Adicional</h3>
+          
+          <button onClick={agregarCampoExtra} className="btn-add-field">
+            <FaPlus /> Agregar Campo Extra
+          </button>
+          
+          {Object.keys(extras).length === 0 ? (
+            <div className="empty-extras">
+              <p>No hay campos extras configurados</p>
+            </div>
+          ) : (
+            <div className="extras-grid">
+              {Object.entries(extras).map(([key, value]) => (
+                <div key={key} className="extra-field">
+                  <div className="extra-field-header">
+                    <label>{key}</label>
+                    <button 
+                      onClick={() => eliminarCampoExtra(key)}
+                      className="btn-remove-field"
+                      title="Eliminar campo"
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+                  <input
+                    value={value}
+                    onChange={e => handleExtraChange(key, e.target.value)}
+                    placeholder={`Valor para ${key}`}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      <div className="form-group">
-        <label>Nombre:</label>
-        <input
-          type="text"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          placeholder="Nombre descriptivo del servidor"
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Tipo:</label>
-        <select value={tipo} onChange={(e) => handleTipoChange(e.target.value)}>
-          <option value="">Seleccione un tipo</option>
-          {Object.entries(tiposAgrupados).map(([grupo, tipos]) => (
-            <optgroup key={grupo} label={grupo}>
-              {tipos.map((tipoOpcion) => (
-                <option key={tipoOpcion} value={tipoOpcion}>
-                  {tipoOpcion}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
-
-      <div className="form-group">
-        <label>Host:</label>
-        <input
-          type="text"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          placeholder="Dirección del servidor"
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Puerto:</label>
-        <input
-          type="number"
-          value={puerto}
-          onChange={(e) => setPuerto(e.target.value)}
-          placeholder="Puerto de conexión"
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Usuario:</label>
-        <input
-          type="text"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          placeholder="Usuario de conexión"
-        />
-      </div>
-
-      <div className="form-group">
-        <label>Clave:</label>
-        <input
-          type="password"
-          value={clave}
-          onChange={(e) => setClave(e.target.value)}
-          placeholder="Contraseña"
-        />
-      </div>
-
-      <div className="config-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h4 style={{ margin: 0 }}>Campos Extras</h4>
-          <a 
-            href="/docs/campos-servidor" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="btn-documentacion"
-          >
-            📖 Ver Documentación
-          </a>
-        </div>
-        <button onClick={agregarCampoExtra} className="btn-agregar">➕ Agregar Campo</button>
-        {Object.entries(extras).map(([key, value]) => (
-          <div key={key} className="config-row">
-            <label>{key}</label>
-            <input
-              value={value}
-              onChange={e => handleExtraChange(key, e.target.value)}
-            />
-            <button onClick={() => eliminarCampoExtra(key)}>❌</button>
-          </div>
-        ))}
-      </div>
-
-      <div className="form-actions">
-        <button onClick={handleGuardar} className="btn-guardar">💾 Guardar</button>
-        <button onClick={onCancelar} className="btn-cancelar">Cancelar</button>
+      {/* Footer Actions */}
+      <div className="servidor-form-footer">
+        <button onClick={onCancelar} className="btn btn-secondary">
+          Cancelar
+        </button>
+        <button onClick={handleGuardar} disabled={generandoCodigo} className="btn btn-primary">
+          {generandoCodigo ? '⏳ Generando...' : '💾 Guardar Servidor'}
+        </button>
       </div>
     </div>
   );

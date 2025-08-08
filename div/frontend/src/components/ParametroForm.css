@@ -1,0 +1,226 @@
+/* Formulario de Parámetro */
+.parametro-form {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--gray-200);
+  width: 100%;
+  max-width: 600px;
+  overflow: hidden;
+}
+
+/* Header */
+.parametro-form-header {
+  background: linear-gradient(135deg, var(--orange-600), var(--orange-700));
+  padding: var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--white);
+}
+
+.form-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.parametro-icon {
+  font-size: 2.5rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--white);
+}
+
+.parametro-form-header h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.parametro-form-header p {
+  font-size: var(--text-base);
+  margin: var(--space-1) 0 0 0;
+  opacity: 0.9;
+}
+
+.btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: var(--white);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Body */
+.parametro-form-body {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-group label {
+  font-weight: 500;
+  color: var(--gray-700);
+  font-size: var(--text-sm);
+}
+
+.form-group input,
+.form-group textarea {
+  padding: var(--space-3);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  transition: all var(--transition-fast);
+  background: var(--white);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--orange-400);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Información de ayuda */
+.help-text {
+  font-size: var(--text-sm);
+  color: var(--gray-500);
+  margin-top: var(--space-1);
+  line-height: 1.4;
+}
+
+.help-text.info {
+  color: var(--blue-600);
+  background: var(--blue-25);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--blue-400);
+}
+
+/* Footer */
+.parametro-form-footer {
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.btn {
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border-color: var(--gray-300);
+}
+
+.btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.btn-primary {
+  background: var(--orange-600);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background: var(--orange-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .parametro-form {
+    margin: var(--space-4);
+  }
+
+  .parametro-form-header {
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: center;
+  }
+
+  .form-title-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .parametro-form-body {
+    padding: var(--space-4);
+  }
+
+  .parametro-form-footer {
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+
+  .parametro-form-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .parametro-form {
+    margin: var(--space-2);
+    border-radius: var(--radius-md);
+  }
+
+  .parametro-form-header {
+    padding: var(--space-4);
+  }
+
+  .parametro-form-body {
+    padding: var(--space-3);
+    gap: var(--space-4);
+  }
+
+  .parametro-icon {
+    font-size: 2rem;
+    padding: var(--space-2);
+  }
+
+  .parametro-form-header h2 {
+    font-size: var(--text-xl);
+  }
+}
