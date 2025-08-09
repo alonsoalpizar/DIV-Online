@@ -1,6 +1,4 @@
 iniciar - detener - reiniciar el servicio de backend del frontend
-
-
 # Estado
 systemctl status div-backend.service
 
@@ -15,6 +13,8 @@ iniciar - detener - Reiniciar el servicio de Motor Backend
 # Estado
 systemctl status div-backend-motor.service
 
+systemctl stop div-backend-motor.service
+
 # Reiniciar
 sudo systemctl restart div-backend-motor.service
 
@@ -28,4 +28,8 @@ cd div/frontend/S
 
 Iniciar el backend Motor manualmente para debug
 /opt/BackendMotor# go run cmd/server/main.go 
+
+
+compilar de nuevo 
+npm run build en carpeta de frontend
 

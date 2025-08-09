@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaServer, FaLink, FaCogs, FaFileAlt, FaTable, FaTools, FaClock, FaCode } from 'react-icons/fa';
+import { FaHome, FaServer, FaLink, FaCogs, FaFileAlt, FaTable, FaTools, FaClock, FaCode, FaTags } from 'react-icons/fa';
 import { useSystemCounts } from '../hooks/useSystemCounts';
 import '../styles/globals.css';
 import '../styles/sidebar.css';
@@ -46,6 +46,7 @@ const Sidebar = () => {
       icon: <FaTable />, 
       badge: counts.tablas > 0 ? counts.tablas.toString() : null
     },
+    { to: '/categorias', label: 'Categorías', icon: <FaTags />, badge: null },
     { to: '/configuracion', label: 'Configuración', icon: <FaTools />, badge: null },
   ];
 

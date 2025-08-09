@@ -809,13 +809,14 @@ if (esLineaErrorCondicion && targetNode) {
           separadorClaveValor={nodoEditando.data.separadorClaveValor}
           segmentosFijos={nodoEditando.data.segmentosFijos || []}
           camposUnir={nodoEditando.data.camposUnir || []}
+          parametrosEntrada={nodoEditando.data.parametrosEntrada || []}
           parametrosSalida={nodoEditando.data.parametrosSalida || []}
           longitudRegistro={nodoEditando.data.longitudRegistro}
           campoMultiple={nodoEditando.data.campoMultiple}
           codificacion={nodoEditando.data.codificacion}
           prefijo={nodoEditando.data.prefijo}
           sufijo={nodoEditando.data.sufijo}
-          onGuardar={(nuevoLabel, modo, entrada, salida, modoParseo, delim, sep, segmentos, campos, salidaCampos, codificacion, prefijo, sufijo, longitudRegistro, campoMultiple) => {
+          onGuardar={(nuevoLabel, modo, entrada, salida, modoParseo, delim, sep, segmentos, campos, entradaCampos, salidaCampos, codificacion, prefijo, sufijo, longitudRegistro, campoMultiple) => {
             setNodes((nds) =>
               nds.map((n) =>
                 n.id === nodoEditando.id
@@ -832,7 +833,7 @@ if (esLineaErrorCondicion && targetNode) {
                         separadorClaveValor: sep,
                         segmentosFijos: segmentos,
                         camposUnir: campos,
-                        parametrosEntrada: modo === 'unir' ? campos : [],
+                        parametrosEntrada: entradaCampos,
                         parametrosSalida: modo === 'descomponer'
                           ? salidaCampos
                           : [{ nombre: salida, tipo: 'string' }],

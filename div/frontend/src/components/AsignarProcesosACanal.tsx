@@ -21,8 +21,8 @@ import './AsignarProcesosACanal.css';
 // Métodos HTTP válidos
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
 
-// Rutas de ejemplo para autocompletar
-const EXAMPLE_ROUTES = ['/api/usuarios', '/api/productos', '/api/pedidos', '/api/reportes', '/api/configuracion'];
+// Endpoints de ejemplo para autocompletar
+const EXAMPLE_ENDPOINTS = ['usuarios', 'productos', 'pedidos', 'reportes', 'configuracion', 'ejecutarconsulta', 'obtenerDatos', 'procesarOrden'];
 
 const AsignarProcesosACanal: React.FC<Props> = ({ canal, onCancelar, onAsignar }) => {
   const [procesos, setProcesos] = useState<Proceso[]>([]);
@@ -53,13 +53,13 @@ const AsignarProcesosACanal: React.FC<Props> = ({ canal, onCancelar, onAsignar }
     if (!trigger.trim()) return 'El endpoint es obligatorio';
     
     if (!trigger.includes('|')) {
-      return 'Formato incorrecto. Use: /ruta|METODO';
+      return 'Formato incorrecto. Use: endpoint|METODO';
     }
     
-    const [ruta, metodo] = trigger.split('|');
+    const [endpoint, metodo] = trigger.split('|');
     
-    if (!ruta || !ruta.startsWith('/')) {
-      return 'La ruta debe comenzar con /';
+    if (!endpoint || !endpoint.trim()) {
+      return 'El endpoint no puede estar vacío';
     }
     
     if (!metodo || !HTTP_METHODS.includes(metodo.toUpperCase())) {
@@ -227,13 +227,13 @@ const handleAsignar = async (procesoId: string) => {
               type="text"
               value={config.ruta}
               onChange={(e) => updateRestConfig(procesoId, e.target.value, config.metodo)}
-              placeholder="/api/proceso"
+              placeholder="ejecutarconsulta"
               className={error ? 'error' : ''}
-              list={`routes-${procesoId}`}
+              list={`endpoints-${procesoId}`}
             />
-            <datalist id={`routes-${procesoId}`}>
-              {EXAMPLE_ROUTES.map(route => (
-                <option key={route} value={route} />
+            <datalist id={`endpoints-${procesoId}`}>
+              {EXAMPLE_ENDPOINTS.map(endpoint => (
+                <option key={endpoint} value={endpoint} />
               ))}
             </datalist>
           </div>

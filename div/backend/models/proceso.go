@@ -6,4 +6,6 @@ type Proceso struct {
 	Nombre      string `json:"nombre" gorm:"not null"`
 	Descripcion string `json:"descripcion"`
 	Flujo       string `json:"flujo" gorm:"type:text"`
+	// Campo opcional para categorización - no afecta funcionalidad existente
+	CategoriaID *string `json:"categoria_id" gorm:"type:uuid"`
 }

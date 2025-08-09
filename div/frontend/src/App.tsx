@@ -14,6 +14,7 @@ import ConfiguracionSistema from './pages/ConfiguracionSistema';
 import TareasProgramadas from './pages/TareasProgramadas';
 import TestClient from './pages/TestClient';
 import DocumentacionCamposServidor from './pages/DocumentacionCamposServidor';
+import Categorias from './pages/Categorias';
 import './styles/design-system.css';
 import './styles/home.css';
 import './styles/pages.css';
@@ -35,6 +36,7 @@ const App = () => {
       <Route path="/configuracion" element={<Layout><ConfiguracionSistema /></Layout>} />
       <Route path="/tareas-programadas" element={<Layout><TareasProgramadas /></Layout>} />
       <Route path="/test-client" element={<Layout><TestClient /></Layout>} />
+      <Route path="/categorias" element={<Layout><Categorias /></Layout>} />
       
       {/* Rutas de documentación con layout limpio */}
       <Route path="/docs/campos-servidor" element={

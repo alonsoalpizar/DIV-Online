@@ -40,6 +40,12 @@ func SetupRoutes() *mux.Router {
 	router.HandleFunc("/procesos/{id}", controllers.ActualizarProceso).Methods("PUT")
 	router.HandleFunc("/procesos/{id}", controllers.EliminarProceso).Methods("DELETE")
 
+	// Rutas de Categorías
+	router.HandleFunc("/categorias", controllers.ListarCategorias).Methods("GET")
+	router.HandleFunc("/categorias", controllers.CrearCategoria).Methods("POST")
+	router.HandleFunc("/categorias/{id}", controllers.ActualizarCategoria).Methods("PUT")
+	router.HandleFunc("/categorias/{id}", controllers.EliminarCategoria).Methods("DELETE")
+
 	// Rutas de Canal-Procesos
 	router.HandleFunc("/canal-procesos/{canalId}", controllers.GetProcesosAsignados).Methods("GET")
 	router.HandleFunc("/canal-procesos", controllers.AsignarProcesoACanal).Methods("POST")

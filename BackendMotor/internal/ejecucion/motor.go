@@ -71,16 +71,25 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 	erroresPorNodo := make(map[string]bool)
 	respuestaFinal := make(map[string]interface{})
 	visitados := make(map[string]bool)
-	queue := []string{nodoEntrada.ID}
+	pendientes := make(map[string]bool)
+	
+	// Inicializar con nodo de entrada
+	pendientes[nodoEntrada.ID] = true
 
-	// 🔁 Paso 7: Recorrido y ejecución de nodos del flujo
-	for len(queue) > 0 {
-		nodoID := queue[0]
-		queue = queue[1:]
-		if visitados[nodoID] {
-			continue
+	// 🔁 Paso 7: Recorrido optimizado y ejecución de nodos del flujo
+	for len(pendientes) > 0 {
+		// Obtener cualquier nodo pendiente (map no garantiza orden, pero está bien)
+		var nodoID string
+		for id := range pendientes {
+			nodoID = id
+			break
 		}
+		
+		// Remover de pendientes y marcar como visitado
+		delete(pendientes, nodoID)
 		visitados[nodoID] = true
+		
+		fmt.Printf("🔄 Procesando nodo %s (%s)\n", nodoID, nodosPorID[nodoID].Type)
 		n := nodosPorID[nodoID]
 
 		asignaciones := make(map[string]interface{})
@@ -125,6 +134,82 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 				asignacionesAplicadas[k] = v
 			}
 
+		case "subproceso":
+			// Crear contexto si no existe
+			contexto := &ContextoSubproceso{
+				ProcesoID:       proc.ID,
+				ParentProcesoID: "",
+				Variables:       make(map[string]interface{}),
+				Globales:        input, // Pasar variables de entrada como globales
+				Depth:           0,
+				CallStack:       []string{},
+				TraceID:         fmt.Sprintf("%s-%d", proc.ID, time.Now().UnixNano()),
+				Timeout:         60 * time.Second,
+				Inicio:          inicio,
+			}
+			
+			newResultado, newAsignaciones, err := ejecutarNodoSubproceso(n, resultado, contexto, canalCodigo)
+			if err != nil {
+				erroresPorNodo[n.ID] = true
+				resultado["codigoError"] = "SUB_ERROR"
+				resultado["mensajeError"] = fmt.Sprintf("Error en subproceso: %v", err)
+			} else {
+				resultado = newResultado
+				for k, v := range newAsignaciones {
+					asignacionesAplicadas[k] = v
+				}
+				// Verificar si el subproceso retornó error
+				if codigo, ok := resultado["codigoError"]; ok && codigo != nil && codigo != "" {
+					erroresPorNodo[n.ID] = true
+				}
+			}
+			
+			// 🎯 RUTEO INTELIGENTE: Solo agregar el nodo de salida correcto según el resultado
+			for _, e := range flujo.Edges {
+				if e.Source != n.ID {
+					continue
+				}
+				
+				targetID := e.Target
+				if visitados[targetID] || pendientes[targetID] {
+					continue
+				}
+				
+				targetNode := nodosPorID[targetID]
+				
+				// Si hay error en subproceso, solo agregar salidaError
+				if erroresPorNodo[n.ID] && targetNode.Type == "salidaError" {
+					fmt.Printf("➡️ Agregando nodo %s (salidaError por error en subproceso)\n", targetID)
+					pendientes[targetID] = true
+				} 
+				// Si no hay error, solo agregar salida normal
+				if !erroresPorNodo[n.ID] && targetNode.Type == "salida" {
+					fmt.Printf("➡️ Agregando nodo %s (salida por éxito en subproceso)\n", targetID)
+					pendientes[targetID] = true
+				}
+				// Para otros tipos de nodos (proceso, condicion, etc.) agregarlos normalmente
+				if targetNode.Type != "salida" && targetNode.Type != "salidaError" {
+					if !erroresPorNodo[n.ID] { // Solo si no hay error
+						fmt.Printf("➡️ Agregando nodo %s (%s después de subproceso exitoso)\n", targetID, targetNode.Type)
+						pendientes[targetID] = true
+					}
+				}
+			}
+			continue // No ejecutar la lógica general de agregado
+
+		case "splitter":
+			newResultado, newAsignaciones, err := ejecutarNodoSplitter(n, resultado, canalCodigo)
+			if err != nil {
+				erroresPorNodo[n.ID] = true
+				resultado["codigoError"] = "SPLITTER_ERROR"
+				resultado["mensajeError"] = fmt.Sprintf("Error en splitter: %v", err)
+			} else {
+				resultado = newResultado
+				for k, v := range newAsignaciones {
+					asignacionesAplicadas[k] = v
+				}
+			}
+
 		case "condicion":
 			cumple, err := ejecutarNodoCondicion(n, resultado, canalCodigo)
 			if err != nil {
@@ -160,26 +245,45 @@ func EjecutarFlujo(procesoID string, input map[string]interface{}, canalCodigo s
 				}
 			}
 
+			// Agregar nodos siguientes según condición
 			for _, e := range flujo.Edges {
 				if e.Source != n.ID {
 					continue
 				}
+				
+				targetID := e.Target
+				// Verificar que no esté ya visitado o pendiente
+				if visitados[targetID] || pendientes[targetID] {
+					continue
+				}
+				
 				if (cumple && e.SourceHandle == "true") || (!cumple && e.SourceHandle == "false") {
-					queue = append(queue, e.Target)
+					fmt.Printf("➡️ Agregando nodo %s (condición %v desde %s)\n", targetID, cumple, n.ID)
+					pendientes[targetID] = true
 				}
 			}
 			continue
 		}
 
+		// 🎯 ALGORITMO OPTIMIZADO: Solo agregar nodos NO visitados y NO pendientes
 		for _, e := range flujo.Edges {
 			if e.Source != n.ID {
 				continue
 			}
-			if erroresPorNodo[n.ID] && e.Type == "error" {
-				queue = append(queue, e.Target)
+			
+			targetID := e.Target
+			// Verificar que no esté ya visitado o pendiente
+			if visitados[targetID] || pendientes[targetID] {
+				continue
 			}
-			if !erroresPorNodo[n.ID] && e.Type != "error" {
-				queue = append(queue, e.Target)
+			
+			// Agregar según el tipo de edge y estado del nodo
+			if erroresPorNodo[n.ID] && e.Type == "error" {
+				fmt.Printf("➡️ Agregando nodo %s (error desde %s)\n", targetID, n.ID)
+				pendientes[targetID] = true
+			} else if !erroresPorNodo[n.ID] && e.Type != "error" {
+				fmt.Printf("➡️ Agregando nodo %s (normal desde %s)\n", targetID, n.ID)
+				pendientes[targetID] = true
 			}
 		}
 	}

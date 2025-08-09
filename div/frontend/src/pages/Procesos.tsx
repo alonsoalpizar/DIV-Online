@@ -4,37 +4,18 @@ import { Proceso } from '../types/proceso';
 import ProcesoForm from '../components/ProcesoForm';
 import ProcesoList from '../components/ProcesoList';
 import Modal from '../components/Modal';
-import { FaPlus, FaCogs, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaCogs } from 'react-icons/fa';
 import { getApiBase } from '../utils/configuracion';
 
 
 const Procesos = () => {
   const [procesos, setProcesos] = useState<Proceso[]>([]);
-  const [procesosFiltrados, setProcesosFiltrados] = useState<Proceso[]>([]);
-  const [filtroLocal, setFiltroLocal] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [procesoSeleccionado, setProcesoSeleccionado] = useState<Proceso | null>(null);
 
   const cargarProcesos = async () => {
     const res = await axios.get(`${getApiBase()}/procesos`);
     setProcesos(res.data);
-    setProcesosFiltrados(res.data);
-  };
-
-  const filtrarProcesos = (termino: string) => {
-    setFiltroLocal(termino);
-    
-    if (!termino.trim()) {
-      setProcesosFiltrados(procesos);
-      return;
-    }
-
-    const filtrados = procesos.filter(proceso =>
-      proceso.nombre.toLowerCase().includes(termino.toLowerCase()) ||
-      (proceso.descripcion && proceso.descripcion.toLowerCase().includes(termino.toLowerCase()))
-    );
-    
-    setProcesosFiltrados(filtrados);
   };
 
   const guardarProceso = async (proceso: Proceso) => {
@@ -93,8 +74,8 @@ const Procesos = () => {
       {/* Stats Row */}
       <div className="stats-row">
         <div className="stat-card">
-          <div className="stat-value">{filtroLocal ? procesosFiltrados.length : procesos.length}</div>
-          <div className="stat-label">{filtroLocal ? 'Resultados' : 'Procesos Totales'}</div>
+          <div className="stat-value">{procesos.length}</div>
+          <div className="stat-label">Procesos Totales</div>
           <div className="stat-change">+{procesos.length} creados</div>
         </div>
         <div className="stat-card">
@@ -109,41 +90,16 @@ const Procesos = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="page-filters">
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Buscar procesos por nombre o descripción..."
-            className="search-input"
-            value={filtroLocal}
-            onChange={(e) => filtrarProcesos(e.target.value)}
-          />
-        </div>
-      </div>
-
       {/* Content */}
       <div className="page-content">
         <ProcesoList
-          procesos={procesosFiltrados}
+          procesos={procesos}
           onEditar={(proceso) => {
             setProcesoSeleccionado(proceso);
             setMostrarFormulario(true);
           }}
           onEliminar={eliminarProceso}
         />
-        {procesosFiltrados.length === 0 && filtroLocal && (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <FaSearch />
-            </div>
-            <h3 className="empty-state-title">Sin resultados</h3>
-            <p className="empty-state-description">
-              No se encontraron procesos que coincidan con "{filtroLocal}"
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Modal para formulario de proceso */}

@@ -4,6 +4,12 @@ import { getApiBase } from '../utils/configuracion';
 import { FaCogs, FaTimes } from 'react-icons/fa';
 import './ProcesoForm.css';
 
+interface Categoria {
+  id: string;
+  nombre: string;
+  color?: string;
+}
+
 interface Props {
   proceso?: Proceso | null;
   onGuardar: (proceso: Proceso) => void;
@@ -14,6 +20,8 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
   const [codigo, setCodigo] = useState(proceso?.codigo || '');
   const [nombre, setNombre] = useState(proceso?.nombre || '');
   const [descripcion, setDescripcion] = useState(proceso?.descripcion || '');
+  const [categoriaId, setCategoriaId] = useState((proceso as any)?.categoria_id || '');
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [generandoCodigo, setGenerandoCodigo] = useState(false);
 
   // Función para obtener próximo código automático
@@ -33,12 +41,26 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
     }
   };
 
+  // Cargar categorías
+  const cargarCategorias = async () => {
+    try {
+      const response = await fetch(`${getApiBase()}/categorias`);
+      const data = await response.json();
+      setCategorias(data || []);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+    }
+  };
+
   useEffect(() => {
+    cargarCategorias();
+    
     if (proceso) {
       // Editando proceso existente
       setCodigo(proceso.codigo);
       setNombre(proceso.nombre);
       setDescripcion(proceso.descripcion || '');
+      setCategoriaId((proceso as any).categoria_id || '');
     } else {
       // Nuevo proceso: generar código automático
       obtenerProximoCodigo();
@@ -56,8 +78,9 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
       codigo,
       nombre,
       descripcion,
-      flujo: proceso?.flujo || ''
-    };
+      flujo: proceso?.flujo || '',
+      categoria_id: categoriaId || undefined
+    } as any;
 
     onGuardar(nuevo);
   };
@@ -120,6 +143,44 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
             placeholder="Descripción opcional del proceso"
           />
         </div>
+
+        {/* Campo de categoría - solo si hay categorías disponibles */}
+        {categorias.length > 0 && (
+          <div className="form-group">
+            <label>Categoría:</label>
+            <select 
+              value={categoriaId} 
+              onChange={e => setCategoriaId(e.target.value)}
+              style={{ 
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">Sin categoría</option>
+              {categorias.map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.nombre}
+                </option>
+              ))}
+            </select>
+            {categoriaId && (
+              <div style={{ marginTop: '5px' }}>
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  backgroundColor: categorias.find(c => c.id === categoriaId)?.color || '#e0e0e0',
+                  color: '#fff',
+                  fontSize: '0.9em'
+                }}>
+                  Vista previa: {categorias.find(c => c.id === categoriaId)?.nombre}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer Actions */}
