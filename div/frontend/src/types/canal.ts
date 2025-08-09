@@ -7,4 +7,5 @@ export interface Canal {
   puerto: string;
   tipoData: String;
   extras: Record<string, string>;
+  categoria_id?: string;
 }

@@ -91,25 +91,6 @@ const Tablas = () => {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-value">{filtroLocal ? tablasFiltradas.length : tablas.length}</div>
-          <div className="stat-label">{filtroLocal ? 'Resultados' : 'Tablas Totales'}</div>
-          <div className="stat-change">+{tablas.length} definidas</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{tablas.reduce((acc, t) => acc + (t.campos?.length || 0), 0)}</div>
-          <div className="stat-label">Campos Totales</div>
-          <div className="stat-change">En esquemas</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{tablas.reduce((acc, t) => acc + (t.datos?.length || 0), 0)}</div>
-          <div className="stat-label">Registros Totales</div>
-          <div className="stat-change">En tablas</div>
-        </div>
-      </div>
-
       {/* Search and Filters */}
       <div className="page-filters">
         <div className="search-box">

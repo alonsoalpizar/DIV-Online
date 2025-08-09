@@ -92,25 +92,6 @@ const Parametros = () => {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-value">{filtroLocal ? parametrosFiltrados.length : parametros.length}</div>
-          <div className="stat-label">{filtroLocal ? 'Resultados' : 'Parámetros Totales'}</div>
-          <div className="stat-change">+{parametros.length} configurados</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{parametros.filter(p => p.descripcion).length}</div>
-          <div className="stat-label">Con Descripción</div>
-          <div className="stat-change">Documentados</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">42</div>
-          <div className="stat-label">Usos Activos</div>
-          <div className="stat-change">En sistema</div>
-        </div>
-      </div>
-
       {/* Search and Filters */}
       <div className="page-filters">
         <div className="search-box">

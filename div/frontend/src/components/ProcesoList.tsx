@@ -29,16 +29,14 @@ const ProcesoList: React.FC<Props> = ({ procesos, onEditar, onEliminar }) => {
   
   // Cargar categorías desde el backend
   useEffect(() => {
-    fetch(`${getApiBase()}/categorias`)
+    fetch(`${getApiBase()}/categorias?ambito=proceso`)
       .then(res => res.json())
       .then(data => {
         setCategorias(data || []);
-        // Expandir todas las categorías por defecto
-        const ids = new Set<string>((data || []).map((c: Categoria) => c.id));
-        ids.add('sin-categoria');
-        setCategoriasExpandidas(ids);
+        // Inicializar todas las categorías como comprimidas por defecto
+        setCategoriasExpandidas(new Set());
       })
-      .catch(err => console.log('Error cargando categorías:', err));
+      .catch(err => console.log('Error cargando categorías de procesos:', err));
   }, []);
 
   // Filtrar procesos por búsqueda

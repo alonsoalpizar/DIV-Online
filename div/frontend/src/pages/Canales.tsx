@@ -5,14 +5,12 @@ import CanalForm from '../components/CanalForm';
 import CanalList from '../components/CanalList';
 import AsignarProcesosACanal from '../components/AsignarProcesosACanal';
 import Modal from '../components/Modal';
-import { FaPlus, FaLink, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaLink } from 'react-icons/fa';
 import { getApiBase } from '../utils/configuracion';
 
 
 const Canales = () => {
   const [canales, setCanales] = useState<Canal[]>([]);
-  const [canalesFiltrados, setCanalesFiltrados] = useState<Canal[]>([]);
-  const [filtroLocal, setFiltroLocal] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [canalSeleccionado, setCanalSeleccionado] = useState<Canal | null>(null);
   const [canalParaAsignar, setCanalParaAsignar] = useState<Canal | null>(null); // 🆕 asignación
@@ -20,24 +18,6 @@ const Canales = () => {
   const cargarCanales = async () => {
     const res = await axios.get(`${getApiBase()}/canales`);
     setCanales(res.data);
-    setCanalesFiltrados(res.data);
-  };
-
-  const filtrarCanales = (termino: string) => {
-    setFiltroLocal(termino);
-    
-    if (!termino.trim()) {
-      setCanalesFiltrados(canales);
-      return;
-    }
-
-    const filtrados = canales.filter(canal =>
-      canal.nombre.toLowerCase().includes(termino.toLowerCase()) ||
-      canal.codigo.toLowerCase().includes(termino.toLowerCase()) ||
-      canal.tipoPublicacion.toLowerCase().includes(termino.toLowerCase())
-    );
-    
-    setCanalesFiltrados(filtrados);
   };
 
   const guardarCanal = async (canal: Canal) => {
@@ -129,44 +109,10 @@ const Canales = () => {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-value">{filtroLocal ? canalesFiltrados.length : canales.length}</div>
-          <div className="stat-label">{filtroLocal ? 'Resultados' : 'Canales Totales'}</div>
-          <div className="stat-change">+{canales.filter(c => c.tipoPublicacion === 'REST').length} REST</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{canales.filter(c => c.puerto && c.puerto.trim()).length}</div>
-          <div className="stat-label">Canales Configurados</div>
-          <div className="stat-change">+{canales.filter(c => c.tipoPublicacion === 'SOAP').length} SOAP</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">147</div>
-          <div className="stat-label">Ejecuciones Hoy</div>
-          <div className="stat-change">+23% vs ayer</div>
-        </div>
-      </div>
-
-      {/* Search and Filters */}
-      <div className="page-filters">
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Buscar canales por código o nombre..."
-            className="search-input"
-            value={filtroLocal}
-            onChange={(e) => filtrarCanales(e.target.value)}
-          />
-        </div>
-       
-      </div>
-
       {/* Content */}
       <div className="page-content">
         <CanalList
-          canales={canalesFiltrados}
+          canales={canales}
           onEditar={(canal) => {
             setCanalSeleccionado(canal);
             setMostrarFormulario(true);
@@ -176,17 +122,6 @@ const Canales = () => {
             setCanalParaAsignar(canal);
           }}
         />
-        {canalesFiltrados.length === 0 && filtroLocal && (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <FaSearch />
-            </div>
-            <h3 className="empty-state-title">Sin resultados</h3>
-            <p className="empty-state-description">
-              No se encontraron canales que coincidan con "{filtroLocal}"
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Modal para formulario de canal */}

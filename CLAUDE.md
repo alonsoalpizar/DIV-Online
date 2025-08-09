@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**DIV - Designer de Integración Visual** is a visual integration orchestration system consisting of two main components:
+**DIV - Designer de Integración Visual** is a visual integration orchestration system consisting of three main components:
 
-- **BackendMotor** (Go): Core execution engine that processes integration flows on port 50000
-- **div/backend** (Go): Management API for configuration and metadata on port 30000  
-- **div/frontend** (React + TypeScript): Visual flow designer interface on port 5173
+- **BackendMotor** (Go 1.23): Core execution engine that processes integration flows on port 50000
+- **div/backend** (Go 1.24): Management API for configuration and metadata on port 30000  
+- **div/frontend** (React 19 + TypeScript 5.8): Visual flow designer interface on port 5173
 
 The system enables visual creation and execution of data integration workflows with support for various node types (entrada, condición, proceso, salida, splitter, subproceso, salida_error).
 
@@ -39,7 +39,7 @@ go run cmd/server/main.go  # Start on port 50000
 # div-backend.service (Management API)
 sudo systemctl restart div-backend.service
 systemctl status div-backend.service
-journalctl -u div-backend.service -f
+journalctl -u div-backend-motor.service -f
 
 # div-backend-motor.service (Execution Engine)
 sudo systemctl restart div-backend-motor.service  
@@ -48,7 +48,7 @@ journalctl -u div-backend-motor.service -f
 ```
 
 ### Database
-Both backends use PostgreSQL with GORM. Connection details configured via environment variables.
+Both backends use PostgreSQL with GORM. Connection details configured via environment variables in `.env` files.
 
 ## Architecture
 
@@ -60,6 +60,7 @@ Both backends use PostgreSQL with GORM. Connection details configured via enviro
   - `internal/scheduler/`: Task scheduling system for programmed executions
   - `internal/monitoring/`: Prometheus metrics collection
   - Node executors in `internal/ejecucion/ejecutores/`
+  - SOAP integration in `internal/integraciones/soap/`
   - Flow parsing and execution logic
 
 ### div/backend (Management API)  
@@ -69,6 +70,7 @@ Both backends use PostgreSQL with GORM. Connection details configured via enviro
   - Controllers for each entity type in `controllers/`
   - Models defining database schema in `models/`
   - CORS middleware configured for frontend communication
+  - Gorilla Mux routing
 
 ### div/frontend (Visual Designer)
 - **Purpose**: React-based visual flow designer using ReactFlow
@@ -78,7 +80,8 @@ Both backends use PostgreSQL with GORM. Connection details configured via enviro
   - `nodos/`: Visual node components for different node types
   - `editors/`: Property editors for each node type
   - `hooks/useFlujo.ts`: Flow state management
-  - `utils/validarFlujo.ts`: Flow validation logic
+  - `utils/validarFlujo.ts`: Flow validation logic (currently disabled)
+  - Drag-and-drop support via @dnd-kit
 
 ### Data Flow
 1. Frontend creates/edits flows visually and saves JSON to div/backend
@@ -87,22 +90,54 @@ Both backends use PostgreSQL with GORM. Connection details configured via enviro
 4. Both backends share the same PostgreSQL database but serve different purposes
 
 ### Node Types
-- **entrada**: Entry points for data input
-- **condición**: Conditional branching logic  
-- **proceso**: Data processing steps
-- **salida**: Output/result nodes
-- **splitter**: Data splitting operations
-- **subproceso**: Nested sub-workflows
-- **salida_error**: Error handling outputs
+- **entrada**: Entry points for data input (REST/SOAP/Database)
+- **condición**: Conditional branching logic with expression evaluation
+- **proceso**: Data processing steps with transformations
+- **salida**: Output/result nodes for external systems
+- **splitter**: Data splitting operations for parallel processing
+- **subproceso**: Nested sub-workflows for modular design
+- **salida_error**: Error handling outputs with retry logic
 
 ### Database Schema
 Key models shared between backends:
-- `Proceso`: Flow definitions with JSON structure
-- `Canal`: Communication channels
-- `Servidor`: External server configurations
-- `Parametro`: System parameters
-- `Tabla`: Table definitions
-- `TareaProgramada`: Scheduled task definitions
+- `Proceso`: Flow definitions with JSON structure in `flujo` field
+- `Canal`: Communication channels with authentication
+- `Servidor`: External server configurations (REST/SOAP endpoints)
+- `Parametro`: System-wide configuration parameters
+- `Tabla`: Table definitions for database operations
+- `TareaProgramada`: Scheduled task definitions with cron expressions
+- `Categoria`: Optional categorization for processes
+
+### Key Technical Details
+
+#### Flow Execution Engine
+The core execution logic in `BackendMotor/internal/ejecucion/motor.go`:
+- Loads process definitions from PostgreSQL using GORM
+- Parses JSON flow structure into executable nodes
+- Supports various connectors (REST, SOAP, PostgreSQL) in `ejecutores/`
+- Dynamic parameter mapping between nodes
+- Comprehensive error handling with retry mechanisms
+- Prometheus metrics for monitoring execution
+
+#### SOAP Integration
+Complete SOAP support in `internal/integraciones/soap/`:
+- WSDL parsing and service discovery
+- Dynamic SOAP envelope generation
+- XML namespace handling
+- Complex type mapping
+
+#### Frontend State Management
+- Flow state managed via custom `hooks/useFlujo.ts`
+- ReactFlow 11 integration for visual node editor
+- Flow validation logic in `utils/validarFlujo.ts`
+- Node editors in `editors/` for each node type configuration
+- Sortable parameter lists with drag-and-drop
+
+#### API Integration
+- Frontend uses Axios for HTTP requests
+- Dynamic API base URL configuration
+- CORS properly configured between services
+- JWT authentication support (planned)
 
 ### Development Workflow
 The project uses a structured daily development approach documented in `logs-desarrollo/` with conversation-driven development using AI assistance. Each development session is logged and tracked.
@@ -110,31 +145,25 @@ The project uses a structured daily development approach documented in `logs-des
 ## Testing and Quality
 
 ### Frontend Testing
-- TypeScript compilation: `npm run build` (includes type checking)
-- Linting: `npm run lint`
+- TypeScript compilation: `npm run build` (includes strict type checking)
+- Linting: `npm run lint` (ESLint with TypeScript rules)
 
 ### Backend Testing  
 - Go compilation validation: `go build` in respective directories
-- No specific test framework configured - verify functionality through manual testing
+- No automated test framework configured - verify functionality through manual testing
 
-## Key Technical Details
+## Important Dependencies
 
-### Flow Execution Engine
-The core execution logic is in `BackendMotor/internal/ejecucion/motor.go`:
-- Loads process definitions from PostgreSQL
-- Parses JSON flow structure into executable nodes
-- Supports various connectors (REST, SOAP, PostgreSQL) in `ejecutores/`
-- Includes monitoring via Prometheus metrics
+### BackendMotor
+- GORM v1.30.0 for database operations
+- Gin v1.10.1 for HTTP routing
+- pgx/v5 for PostgreSQL connectivity
+- govaluate for expression evaluation
+- etree for XML processing
 
-### Frontend State Management
-- Flow state managed via `hooks/useFlujo.ts`
-- ReactFlow integration for visual node editor
-- Flow validation logic in `utils/validarFlujo.ts` (currently disabled)
-- Node editors in `editors/` for each node type configuration
-
-### Database Models
-Shared models between backends include:
-- Flow definitions stored as JSON in `Proceso.flujo` field
-- Channel configurations in `Canal` for external connections
-- Server definitions in `Servidor` for endpoint management
-- Scheduled executions in `TareaProgramada`
+### div/frontend
+- React 19.1.0 with TypeScript 5.8.3
+- Vite 7.0.4 for build tooling
+- ReactFlow 11.11.4 for visual editing
+- @dnd-kit for drag-and-drop functionality
+- React Router DOM 7.7.0 for routing

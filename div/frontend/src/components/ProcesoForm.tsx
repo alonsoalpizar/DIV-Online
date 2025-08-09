@@ -44,11 +44,11 @@ const ProcesoForm: React.FC<Props> = ({ proceso, onGuardar, onCancelar }) => {
   // Cargar categorías
   const cargarCategorias = async () => {
     try {
-      const response = await fetch(`${getApiBase()}/categorias`);
+      const response = await fetch(`${getApiBase()}/categorias?ambito=proceso`);
       const data = await response.json();
       setCategorias(data || []);
     } catch (error) {
-      console.error('Error al cargar categorías:', error);
+      console.error('Error al cargar categorías de procesos:', error);
     }
   };
 

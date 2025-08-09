@@ -15,7 +15,8 @@ type Servidor struct {
 	Usuario       string            `json:"usuario"`
 	Clave         string            `json:"clave"`
 	FechaCreacion time.Time         `json:"fechaCreacion"`
-	Extras        datatypes.JSONMap `json:"extras"` // mapa en formato JSON
+	Extras        datatypes.JSONMap `json:"extras"`    // mapa en formato JSON
+	CategoriaID   *string           `json:"categoria_id"` // Referencia a categoría (nullable)
 }
 
 func (Servidor) TableName() string {

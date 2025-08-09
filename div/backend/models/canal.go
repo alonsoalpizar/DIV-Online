@@ -15,6 +15,7 @@ type Canal struct {
 	Puerto          string            `json:"puerto"`
 	TipoData        string            `json:"tipoData"` // corregido: exportado + camelCase correcto
 	Extras          datatypes.JSONMap `json:"extras"`
+	CategoriaID     *string           `json:"categoria_id" gorm:"type:uuid"` // Referencia a categoría (nullable)
 }
 
 func (Canal) TableName() string {

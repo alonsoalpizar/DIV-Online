@@ -71,25 +71,6 @@ const Procesos = () => {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="stats-row">
-        <div className="stat-card">
-          <div className="stat-value">{procesos.length}</div>
-          <div className="stat-label">Procesos Totales</div>
-          <div className="stat-change">+{procesos.length} creados</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{procesos.filter(p => p.descripcion).length}</div>
-          <div className="stat-label">Con Descripción</div>
-          <div className="stat-change">Documentados</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">89</div>
-          <div className="stat-label">Ejecuciones Hoy</div>
-          <div className="stat-change">+15% vs ayer</div>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="page-content">
         <ProcesoList

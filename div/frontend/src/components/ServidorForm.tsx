@@ -3,7 +3,7 @@ import { Servidor } from '../types/servidor';
 import { getApiBase } from '../utils/configuracion';
 import { extrasPorTipoServidor } from '../hooks/configExtrasPorTipo';
 import { FaServer, FaTimes, FaPlus } from 'react-icons/fa';
-import './ServidorForm.css';
+import './ServidorFormEnhanced.css';
 
 interface Props {
   servidor?: Servidor | null;
@@ -19,6 +19,8 @@ const tiposAgrupados = {
   'Servicios en Tiempo Real': ['Kafka', 'RabbitMQ'],
   'Servicios Híbridos': ['Firebase', 'Supabase'],
   'Conexiones por Socket': ['SocketTCP'],
+  'Servicios de Comunicación': ['WhatsApp', 'SMS', 'Email', 'Telegram', 'Discord', 'Slack'],
+  'Autenticación Externa': ['Google-OAuth', 'Facebook-OAuth', 'Microsoft-OAuth', 'GitHub-OAuth', 'Auth0', 'Okta'],
 };
 
 const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
@@ -31,6 +33,8 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
   const [usuario, setUsuario] = useState(servidor?.usuario || '');
   const [clave, setClave] = useState(servidor?.clave || '');
   const [extras, setConfig] = useState<{ [key: string]: string }>(servidor?.extras || {});
+  const [categoriaId, setCategoriaId] = useState((servidor as any)?.categoria_id || '');
+  const [categorias, setCategorias] = useState<any[]>([]);
   const [generandoCodigo, setGenerandoCodigo] = useState(false);
 
   // Función para obtener próximo código automático
@@ -50,7 +54,22 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
     }
   };
 
+  // Cargar categorías de servidores
+  const cargarCategorias = async () => {
+    try {
+      const response = await fetch(`${getApiBase()}/categorias?ambito=servidor`);
+      const data = await response.json();
+      setCategorias(data || []);
+    } catch (error) {
+      console.error('Error al cargar categorías:', error);
+      setCategorias([]);
+    }
+  };
+
   useEffect(() => {
+    // Cargar categorías al inicio
+    cargarCategorias();
+    
     if (servidor) {
       // Editando servidor existente
       setId(servidor.id || undefined);
@@ -62,6 +81,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
       setUsuario(servidor.usuario || '');
       setClave(servidor.clave || '');
       setConfig(servidor.extras || {});
+      setCategoriaId((servidor as any)?.categoria_id || '');
     } else {
       // Nuevo servidor: limpiar el id y generar código automático
       setId(undefined);
@@ -101,6 +121,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
       usuario: usuario.trim(),
       clave,
       extras: extras || {},
+      categoria_id: categoriaId || null,
     };
 
     // Solo agregar id si existe y no es vacío
@@ -146,7 +167,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
   };
 
   return (
-    <div className="servidor-form">
+    <div className="servidor-form servidor-form-enhanced">
       {/* Header */}
       <div className="servidor-form-header">
         <div className="form-title-section">
@@ -167,7 +188,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
         <div className="form-section">
           <h3>Información Básica</h3>
           
-          <div className="form-row">
+          <div className="form-row-2col">
             <div className="form-group">
               <label>Código:</label>
               <div className="codigo-input-group">
@@ -198,14 +219,14 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Nombre Servidor"
+                placeholder="Nombre descriptivo del servidor"
               />
             </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row-2col">
             <div className="form-group">
-              <label>Tipo:</label>
+              <label>Tipo de Servidor:</label>
               <select value={tipo} onChange={(e) => handleTipoChange(e.target.value)}>
                 <option value="">Seleccione un tipo</option>
                 {Object.entries(tiposAgrupados).map(([grupo, tipos]) => (
@@ -219,6 +240,18 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
                 ))}
               </select>
             </div>
+
+            <div className="form-group">
+              <label>Categoría:</label>
+              <select value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
+                <option value="">Sin categoría</option>
+                {categorias.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -226,9 +259,9 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
         <div className="form-section">
           <h3>Configuración de Conexión</h3>
           
-          <div className="form-row">
+          <div className="form-row-3-1">
             <div className="form-group">
-              <label>Host:</label>
+              <label>Host / Dirección:</label>
               <input
                 type="text"
                 value={host}
@@ -236,9 +269,6 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
                 placeholder="localhost, 192.168.1.100, servidor.empresa.com"
               />
             </div>
-          </div>
-
-          <div className="form-row">
             <div className="form-group">
               <label>Puerto:</label>
               <input
@@ -252,7 +282,7 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
             </div>
           </div>
 
-          <div className="form-row">
+          <div className="form-row-equal">
             <div className="form-group">
               <label>Usuario:</label>
               <input
@@ -264,12 +294,12 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
             </div>
 
             <div className="form-group">
-              <label>Clave:</label>
+              <label>Contraseña:</label>
               <input
                 type="password"
                 value={clave}
                 onChange={(e) => setClave(e.target.value)}
-                placeholder="Contraseña"
+                placeholder="Contraseña segura"
               />
             </div>
           </div>
@@ -315,12 +345,17 @@ const ServidorForm: React.FC<Props> = ({ servidor, onGuardar, onCancelar }) => {
 
       {/* Footer Actions */}
       <div className="servidor-form-footer">
-        <button onClick={onCancelar} className="btn btn-secondary">
-          Cancelar
-        </button>
-        <button onClick={handleGuardar} disabled={generandoCodigo} className="btn btn-primary">
-          {generandoCodigo ? '⏳ Generando...' : '💾 Guardar Servidor'}
-        </button>
+        <div className="servidor-form-footer-info">
+          {servidor ? 'Editando servidor existente' : 'Creando nuevo servidor'}
+        </div>
+        <div className="servidor-form-footer-actions">
+          <button onClick={onCancelar} className="btn btn-secondary">
+            Cancelar
+          </button>
+          <button onClick={handleGuardar} disabled={generandoCodigo} className="btn btn-primary">
+            {generandoCodigo ? '⏳ Generando...' : '💾 Guardar Servidor'}
+          </button>
+        </div>
       </div>
     </div>
   );

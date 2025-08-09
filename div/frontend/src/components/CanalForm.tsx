@@ -17,6 +17,13 @@ const tiposAgrupados = {
   'Archivos': ['FILE']
 };
 
+interface Categoria {
+  id: string;
+  nombre: string;
+  color?: string;
+  activo: boolean;
+}
+
 const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
   const [id, setId] = useState(canal?.id || undefined);
   const [codigo, setCodigo] = useState(canal?.codigo || '');
@@ -25,7 +32,20 @@ const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
   const [puerto, setPuerto] = useState(canal?.puerto || '');
   const [tipoData, setTipoData] = useState<string>(String(canal?.tipoData || 'JSON'));
   const [extras, setExtras] = useState<Record<string, string>>(canal?.extras || {});
+  const [categoriaId, setCategoriaId] = useState<string>(canal?.categoria_id || '');
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [generandoCodigo, setGenerandoCodigo] = useState(false);
+
+  // Función para cargar categorías de canales
+  const cargarCategorias = async () => {
+    try {
+      const response = await fetch(`${getApiBase()}/categorias?ambito=canal`);
+      const data = await response.json();
+      setCategorias(data || []);
+    } catch (error) {
+      console.error('Error cargando categorías de canales:', error);
+    }
+  };
 
   // Función para obtener próximo código automático
   const obtenerProximoCodigo = async () => {
@@ -45,6 +65,9 @@ const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
   };
 
   useEffect(() => {
+    // Cargar categorías al montar el componente
+    cargarCategorias();
+    
     if (canal) {
       // Editando canal existente
       setId(canal.id || undefined);
@@ -54,6 +77,7 @@ const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
       setPuerto(canal.puerto || '');
       setTipoData(String(canal.tipoData || 'JSON'));
       setExtras(canal.extras || {});
+      setCategoriaId(canal.categoria_id || '');
     } else {
       // Nuevo canal: generar código automático
       obtenerProximoCodigo();
@@ -87,6 +111,7 @@ const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
       puerto,
       tipoData,
       extras: extras || {},
+      categoria_id: categoriaId || null,
     };
 
     // Solo agregar id si existe y no es vacío
@@ -196,6 +221,23 @@ const CanalForm: React.FC<Props> = ({ canal, onGuardar, onCancelar }) => {
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Nombre Canal"
               />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Categoría:</label>
+              <select 
+                value={categoriaId} 
+                onChange={(e) => setCategoriaId(e.target.value)}
+              >
+                <option value="">Sin categoría</option>
+                {categorias.map(categoria => (
+                  <option key={categoria.id} value={categoria.id}>
+                    {categoria.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

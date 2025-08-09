@@ -17,7 +17,7 @@
   padding: 0;
   border-radius: 0;
   width: 100%;
-  max-width: 900px;
+  max-width: min(1320px, 95vw); /* Aumentado 10% más para formularios aún más cómodos */
   max-height: 90vh;
   position: relative;
   overflow-y: auto;

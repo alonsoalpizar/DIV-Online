@@ -3,15 +3,13 @@ import { Servidor } from '../types/servidor';
 import ServidorList from '../components/ServidorList';
 import ServidorForm from '../components/ServidorForm';
 import Modal from '../components/Modal';
-import { FaPlus, FaServer, FaSearch } from 'react-icons/fa';
+import { FaPlus, FaServer } from 'react-icons/fa';
 import axios from 'axios';
 import { getApiBase } from '../utils/configuracion';
 
 
 const Servidores = () => {
   const [servidores, setServidores] = useState<Servidor[]>([]);
-  const [servidoresFiltrados, setServidoresFiltrados] = useState<Servidor[]>([]);
-  const [filtroLocal, setFiltroLocal] = useState('');
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [servidorSeleccionado, setServidorSeleccionado] = useState<Servidor | null>(null);
 
@@ -19,29 +17,11 @@ const Servidores = () => {
     try {
       const response = await axios.get(`${getApiBase()}/servidores`);
       setServidores(response.data);
-      setServidoresFiltrados(response.data);
     } catch (error) {
       console.error('Error al cargar servidores:', error);
     }
   };
 
-  const filtrarServidores = (termino: string) => {
-    setFiltroLocal(termino);
-    
-    if (!termino.trim()) {
-      setServidoresFiltrados(servidores);
-      return;
-    }
-
-    const filtrados = servidores.filter(servidor =>
-      servidor.nombre.toLowerCase().includes(termino.toLowerCase()) ||
-      servidor.tipo.toLowerCase().includes(termino.toLowerCase()) ||
-      servidor.codigo.toLowerCase().includes(termino.toLowerCase()) ||
-      servidor.host.toLowerCase().includes(termino.toLowerCase())
-    );
-    
-    setServidoresFiltrados(filtrados);
-  };
 
   useEffect(() => {
     cargarServidores();
@@ -127,38 +107,14 @@ const Servidores = () => {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="page-filters">
-        <div className="search-box">
-          <FaSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Buscar servidores por nombre o tipo..."
-            className="search-input"
-            value={filtroLocal}
-            onChange={(e) => filtrarServidores(e.target.value)}
-          />
-        </div>
-      </div>
 
       {/* Content */}
       <div className="page-content">
         <ServidorList 
-          servidores={servidoresFiltrados} 
+          servidores={servidores} 
           onEditar={editarServidor} 
           onEliminar={eliminarServidor} 
         />
-        {servidoresFiltrados.length === 0 && filtroLocal && (
-          <div className="empty-state">
-            <div className="empty-state-icon">
-              <FaSearch />
-            </div>
-            <h3 className="empty-state-title">Sin resultados</h3>
-            <p className="empty-state-description">
-              No se encontraron servidores que coincidan con "{filtroLocal}"
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Modal */}

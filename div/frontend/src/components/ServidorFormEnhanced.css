@@ -1,0 +1,510 @@
+/* ServidorFormEnhanced.css - Estilos mejorados y aislados para el formulario de Servidores */
+
+/* Contenedor principal del formulario - Más ancho y espacioso */
+.servidor-form-enhanced {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--gray-200);
+  width: 100%;
+  max-width: 1320px; /* Aumentado 10% más para máximo confort visual */
+  overflow: hidden;
+}
+
+/* Header mejorado */
+.servidor-form-enhanced .servidor-form-header {
+  background: linear-gradient(135deg, var(--purple-600), var(--purple-700));
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--white);
+}
+
+.servidor-form-enhanced .form-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.servidor-form-enhanced .servidor-icon {
+  font-size: 2.5rem;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--white);
+}
+
+.servidor-form-enhanced .servidor-form-header h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.servidor-form-enhanced .servidor-form-header p {
+  font-size: var(--text-sm);
+  margin: var(--space-1) 0 0 0;
+  opacity: 0.9;
+}
+
+.servidor-form-enhanced .btn-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: var(--white);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.servidor-form-enhanced .btn-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Body con mejor espaciado */
+.servidor-form-enhanced .servidor-form-body {
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-height: calc(80vh - 180px);
+  overflow-y: auto;
+}
+
+/* Scrollbar personalizado */
+.servidor-form-enhanced .servidor-form-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.servidor-form-enhanced .servidor-form-body::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+}
+
+.servidor-form-enhanced .servidor-form-body::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: var(--radius-md);
+}
+
+.servidor-form-enhanced .servidor-form-body::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* Secciones del formulario mejoradas */
+.servidor-form-enhanced .form-section {
+  background: var(--gray-25);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.servidor-form-enhanced .form-section h3 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--gray-800);
+  border-bottom: 2px solid var(--purple-100);
+  padding-bottom: var(--space-2);
+}
+
+/* Filas del formulario con mejor distribución */
+/* Información Básica - Código y Nombre en la misma fila */
+.servidor-form-enhanced .form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Tipo selector en su propia fila */
+.servidor-form-enhanced .form-row-1col {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-bottom: var(--space-4);
+}
+
+/* Configuración de Conexión - Host y Puerto */
+.servidor-form-enhanced .form-row-3-1 {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+/* Usuario y Clave en la misma fila */
+.servidor-form-enhanced .form-row-equal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.servidor-form-enhanced .form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Grupos de formulario */
+.servidor-form-enhanced .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.servidor-form-enhanced .form-group label {
+  font-weight: 500;
+  color: var(--gray-700);
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.servidor-form-enhanced .form-group input,
+.servidor-form-enhanced .form-group select {
+  padding: var(--space-3);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  transition: all var(--transition-fast);
+  background: var(--white);
+}
+
+.servidor-form-enhanced .form-group input:focus,
+.servidor-form-enhanced .form-group select:focus {
+  outline: none;
+  border-color: var(--purple-400);
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.servidor-form-enhanced .form-group input:disabled {
+  background: var(--gray-100);
+  color: var(--gray-500);
+  cursor: not-allowed;
+}
+
+/* Select mejorado con optgroups */
+.servidor-form-enhanced .form-group select optgroup {
+  font-weight: 600;
+  color: var(--gray-900);
+  background: var(--gray-50);
+}
+
+.servidor-form-enhanced .form-group select option {
+  padding: var(--space-2);
+}
+
+/* Input group con botón para código */
+.servidor-form-enhanced .codigo-input-group {
+  display: flex;
+  align-items: stretch;
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.servidor-form-enhanced .codigo-input-group:focus-within {
+  border-color: var(--purple-400);
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.servidor-form-enhanced .codigo-input-group input {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  padding: var(--space-3);
+}
+
+.servidor-form-enhanced .codigo-input-group input:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.servidor-form-enhanced .btn-generar-codigo {
+  background: var(--gray-50);
+  border: none;
+  border-left: 1px solid var(--gray-300);
+  padding: var(--space-3);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.servidor-form-enhanced .btn-generar-codigo:hover:not(:disabled) {
+  background: var(--purple-50);
+  color: var(--purple-600);
+}
+
+.servidor-form-enhanced .btn-generar-codigo:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Campos extras mejorados en grid */
+.servidor-form-enhanced .btn-add-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--green-50);
+  color: var(--green-700);
+  border: 1px solid var(--green-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+  margin-bottom: var(--space-4);
+}
+
+.servidor-form-enhanced .btn-add-field:hover {
+  background: var(--green-100);
+  border-color: var(--green-300);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.servidor-form-enhanced .empty-extras {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--gray-500);
+  font-style: italic;
+  background: var(--white);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+}
+
+/* Grid mejorado para campos extras - 2 o 3 columnas según el espacio */
+.servidor-form-enhanced .extras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: var(--space-3);
+}
+
+.servidor-form-enhanced .extra-field {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  transition: all var(--transition-fast);
+}
+
+.servidor-form-enhanced .extra-field:hover {
+  border-color: var(--purple-200);
+  box-shadow: var(--shadow-sm);
+}
+
+.servidor-form-enhanced .extra-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.servidor-form-enhanced .extra-field-header label {
+  font-weight: 600;
+  color: var(--gray-800);
+  font-size: var(--text-sm);
+}
+
+.servidor-form-enhanced .btn-remove-field {
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.servidor-form-enhanced .btn-remove-field:hover {
+  color: var(--red-600);
+  background: var(--red-50);
+}
+
+.servidor-form-enhanced .extra-field input {
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+}
+
+.servidor-form-enhanced .extra-field input:focus {
+  outline: none;
+  border-color: var(--purple-400);
+  box-shadow: 0 0 0 2px rgba(147, 51, 234, 0.1);
+}
+
+/* Footer mejorado */
+.servidor-form-enhanced .servidor-form-footer {
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.servidor-form-enhanced .servidor-form-footer-info {
+  font-size: var(--text-sm);
+  color: var(--gray-600);
+  font-style: italic;
+}
+
+.servidor-form-enhanced .servidor-form-footer-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.servidor-form-enhanced .btn {
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.servidor-form-enhanced .btn-secondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border-color: var(--gray-300);
+}
+
+.servidor-form-enhanced .btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.servidor-form-enhanced .btn-primary {
+  background: var(--purple-600);
+  color: var(--white);
+}
+
+.servidor-form-enhanced .btn-primary:hover:not(:disabled) {
+  background: var(--purple-700);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.servidor-form-enhanced .btn-primary:disabled {
+  background: var(--gray-300);
+  color: var(--gray-500);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive - Tablets */
+@media (max-width: 1024px) {
+  .servidor-form-enhanced {
+    max-width: 95%;
+  }
+  
+  .servidor-form-enhanced .extras-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+/* Responsive - Móviles grandes */
+@media (max-width: 768px) {
+  .servidor-form-enhanced {
+    max-width: 100%;
+    border-radius: 0;
+  }
+  
+  .servidor-form-enhanced .servidor-form-header {
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: center;
+    padding: var(--space-4);
+  }
+  
+  .servidor-form-enhanced .form-title-section {
+    flex-direction: column;
+  }
+  
+  .servidor-form-enhanced .servidor-form-body {
+    padding: var(--space-4);
+    max-height: none;
+  }
+  
+  .servidor-form-enhanced .form-section {
+    padding: var(--space-4);
+  }
+  
+  /* Todas las filas se vuelven de una columna en móvil */
+  .servidor-form-enhanced .form-row-2col,
+  .servidor-form-enhanced .form-row-3-1,
+  .servidor-form-enhanced .form-row-equal {
+    grid-template-columns: 1fr;
+  }
+  
+  .servidor-form-enhanced .extras-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .servidor-form-enhanced .servidor-form-footer {
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+  
+  .servidor-form-enhanced .servidor-form-footer-info {
+    text-align: center;
+  }
+  
+  .servidor-form-enhanced .servidor-form-footer-actions {
+    width: 100%;
+    flex-direction: column-reverse;
+  }
+  
+  .servidor-form-enhanced .servidor-form-footer-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Responsive - Móviles pequeños */
+@media (max-width: 480px) {
+  .servidor-form-enhanced .servidor-form-header {
+    padding: var(--space-3);
+  }
+  
+  .servidor-form-enhanced .servidor-icon {
+    font-size: 2rem;
+    padding: var(--space-2);
+  }
+  
+  .servidor-form-enhanced .servidor-form-header h2 {
+    font-size: var(--text-xl);
+  }
+  
+  .servidor-form-enhanced .servidor-form-body {
+    padding: var(--space-3);
+    gap: var(--space-4);
+  }
+  
+  .servidor-form-enhanced .form-section {
+    padding: var(--space-3);
+  }
+}

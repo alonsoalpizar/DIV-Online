@@ -9,10 +9,19 @@ import (
 	"net/http"
 )
 
-// ListarCategorias obtiene todas las categorías activas
+// ListarCategorias obtiene todas las categorías activas, opcionalmente filtradas por ámbito
 func ListarCategorias(w http.ResponseWriter, r *http.Request) {
+	ambito := r.URL.Query().Get("ambito")
+	
 	var categorias []models.Categoria
-	if err := database.DB.Where("activo = ?", true).Order("nombre").Find(&categorias).Error; err != nil {
+	query := database.DB.Where("activo = ?", true)
+	
+	// Si se especifica un ámbito, filtrar por él
+	if ambito != "" {
+		query = query.Where("ambito = ?", ambito)
+	}
+	
+	if err := query.Order("nombre").Find(&categorias).Error; err != nil {
 		http.Error(w, "Error al listar categorías", http.StatusInternalServerError)
 		return
 	}
@@ -29,6 +38,11 @@ func CrearCategoria(w http.ResponseWriter, r *http.Request) {
 
 	nueva.ID = uuid.New().String()
 	nueva.Activo = true
+	
+	// Si no se especifica ámbito, usar "proceso" por defecto
+	if nueva.Ambito == "" {
+		nueva.Ambito = "proceso"
+	}
 	
 	if err := database.DB.Create(&nueva).Error; err != nil {
 		http.Error(w, "Error al crear categoría", http.StatusInternalServerError)
@@ -53,12 +67,15 @@ func ActualizarCategoria(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	actualizada.ID = id
-	if err := database.DB.Save(&actualizada).Error; err != nil {
+	// Preservar valores existentes y actualizar solo los campos enviados
+	existente.Nombre = actualizada.Nombre
+	existente.Color = actualizada.Color
+	
+	if err := database.DB.Save(&existente).Error; err != nil {
 		http.Error(w, "Error al actualizar categoría", http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(actualizada)
+	json.NewEncoder(w).Encode(existente)
 }
 
 // EliminarCategoria desactiva una categoría
